@@ -341,18 +341,18 @@ export class LoroAwarenessPlugin implements PluginValue {
         public user: UserState,
         public awareness: Awareness<AwarenessState>
     ) {
-        const selection = this.view.state.selection.main;
-        const cursorState = getCursorState(
-            doc,
-            selection.head,
-            selection.anchor
-        );
-        this.awareness.setLocalState({
-            type: "update",
-            uid: this.doc.peerIdStr,
-            cursor: cursorState,
-            user,
-        });
+        // const selection = this.view.state.selection.main;
+        // const cursorState = getCursorState(
+        //     doc,
+        //     selection.head,
+        //     selection.anchor
+        // );
+        // this.awareness.setLocalState({
+        //     type: "update",
+        //     uid: this.doc.peerIdStr,
+        //     cursor: cursorState,
+        //     user,
+        // });
         this.sub = this.doc.subscribe((e) => {
             if (e.by === "local") {
                 // update remote cursor position
@@ -427,32 +427,12 @@ export class RemoteAwarenessPlugin implements PluginValue {
     ) {
         const listener: AwarenessListener = async (arg, origin) => {
             if (origin === "local") return;
-            // console.log("[Cursor] receive remote awareness", arg);
-
             this.view.dispatch({
                 effects: parseAwarenessUpdate(this.doc, this.awareness, arg),
             });
         };
         this._awarenessListener = listener;
         this.awareness.addListener(listener);
-        // const effects = [];
-        // for (const [peer, state] of Object.entries(
-        //     this.awareness.getAllStates()
-        // )) {
-        //     if (state && peer !== this.doc.peerIdStr) {
-        //         const effect = getEffects(
-        //             this.doc,
-        //             this.awareness,
-        //             peer as PeerID
-        //         );
-        //         if (effect) {
-        //             effects.push(effect);
-        //         }
-        //     }
-        // }
-        // this.view.dispatch({
-        //     effects,
-        // });
     }
 
     destroy(): void {

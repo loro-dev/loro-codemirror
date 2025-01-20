@@ -18,7 +18,6 @@ import { getTextFromDoc, loroSyncAnnotation } from "./sync";
 
 export const undoEffect = StateEffect.define();
 export const redoEffect = StateEffect.define();
-export const initUndoManager = StateEffect.define<UndoManager>();
 export const undoManagerStateField = StateField.define<UndoManager | undefined>(
     {
         create(state) {
@@ -35,9 +34,6 @@ export const undoManagerStateField = StateField.define<UndoManager | undefined>(
                     if (value && value.canRedo()) {
                         value.redo();
                     }
-                } else if (effect.is(initUndoManager)) {
-                    console.log("initUndoManager");
-                    return effect.value;
                 }
             }
             return value;
@@ -46,7 +42,6 @@ export const undoManagerStateField = StateField.define<UndoManager | undefined>(
 );
 
 export class UndoPluginValue implements PluginValue {
-    undoManager: UndoManager;
     sub?: Subscription;
     lastSelection: {
         anchor: Cursor | undefined;
@@ -58,9 +53,8 @@ export class UndoPluginValue implements PluginValue {
     constructor(
         public view: EditorView,
         public doc: LoroDoc,
-        private undoConfig: UndoConfig
+        private undoManager: UndoManager
     ) {
-        this.undoManager = new UndoManager(doc, undoConfig);
         this.sub = doc.subscribe((e) => {
             if (e.origin !== "undo") return;
 
@@ -93,39 +87,7 @@ export class UndoPluginValue implements PluginValue {
             }
         });
 
-        // TODO: selection
-        this.undoManager.setOnPush((isUndo, counterRange) => {
-            if (!this.doc) {
-                return { value: null, cursors: [] };
-            }
-            const cursors = [];
-            let selection = this.lastSelection;
-            // TODO: when should we need this?
-            // if (!isUndo) {
-            //     const stateSelection = this.view.state.selection.main;
-            //     selection.anchor = getTextFromDoc(this.doc).getCursor(
-            //         stateSelection.anchor
-            //     );
-            //     selection.head = getTextFromDoc(this.doc).getCursor(
-            //         stateSelection.head
-            //     );
-            // }
-            if (selection.anchor) {
-                cursors.push(selection.anchor);
-            }
-            if (selection.head) {
-                cursors.push(selection.head);
-            }
-            return {
-                value: null,
-                cursors,
-            };
-        });
-
         this.undoManager.setOnPop((isUndo, value, counterRange) => {
-            if (!this.doc) {
-                return;
-            }
             const anchor = value.cursors[0] ?? undefined;
             const head = value.cursors[1] ?? undefined;
             if (!anchor) return;
@@ -139,6 +101,30 @@ export class UndoPluginValue implements PluginValue {
                     selection: EditorSelection.single(anchorPos, headPos),
                 });
             }, 0);
+        });
+
+        this.undoManager.setOnPush((isUndo, counterRange) => {
+            const cursors = [];
+            let selection = this.lastSelection;
+            if (!isUndo) {
+                const stateSelection = this.view.state.selection.main;
+                selection.anchor = getTextFromDoc(this.doc).getCursor(
+                    stateSelection.anchor
+                );
+                selection.head = getTextFromDoc(this.doc).getCursor(
+                    stateSelection.head
+                );
+            }
+            if (selection.anchor) {
+                cursors.push(selection.anchor);
+            }
+            if (selection.head) {
+                cursors.push(selection.head);
+            }
+            return {
+                value: null,
+                cursors,
+            };
         });
     }
 

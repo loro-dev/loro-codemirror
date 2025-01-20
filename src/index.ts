@@ -1,5 +1,5 @@
 import { Extension } from "@codemirror/state";
-import { Awareness, LoroDoc, UndoConfig } from "loro-crdt";
+import { Awareness, LoroDoc, UndoConfig, UndoManager } from "loro-crdt";
 import {
     createCursorLayer,
     createSelectionLayer,
@@ -24,11 +24,12 @@ export function loroExtension(
             .extension,
     ];
     if (undoConfig) {
+        const undoManager = new UndoManager(doc, undoConfig);
         extension = extension.concat([
-            undoManagerStateField.extension,
+            undoManagerStateField.init(() => undoManager),
             keymap.of([...undoKeyMap]),
             ViewPlugin.define(
-                (view) => new UndoPluginValue(view, doc, undoConfig)
+                (view) => new UndoPluginValue(view, doc, undoManager)
             ).extension,
         ]);
     }
@@ -57,7 +58,6 @@ export function loroExtension(
             loroCursorTheme,
         ]);
     }
-    console.log(extension);
 
     return extension;
 }

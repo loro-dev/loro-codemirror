@@ -1,7 +1,6 @@
 import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { loroExtension } from "loro-codemirror";
-import { basicSetup } from "codemirror";
 import { Awareness, LoroDoc } from "loro-crdt";
 
 // Create a Loro document
@@ -39,7 +38,6 @@ awareness2.addListener((updates, origin) => {
 new EditorView({
     state: EditorState.create({
         extensions: [
-            basicSetup,
             EditorView.theme({
                 "&": { height: "100%" },
             }),
@@ -60,7 +58,6 @@ new EditorView({
 new EditorView({
     state: EditorState.create({
         extensions: [
-            basicSetup,
             EditorView.theme({
                 "&": { height: "100%" },
             }),
