@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Loro CodeMirror Example</title>
+        <style>
+            body {
+                margin: 0;
+                padding: 20px;
+                font-family: system-ui, -apple-system, sans-serif;
+            }
+            .editor-container {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+                max-width: 800px;
+                margin: 0 auto;
+            }
+            .editor {
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                height: 300px;
+                /* overflow: auto; */
+            }
+            h2 {
+                margin: 0 0 10px 0;
+                font-size: 1.2em;
+                color: #666;
+            }
+            .user1 {
+                color: #f44336;
+                background-color: #f44336;
+            }
+            .user2 {
+                color: #2196f3;
+                background-color: #2196f3;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="editor-container">
+            <div>
+                <h2>Editor 1</h2>
+                <div id="editor1" class="editor"></div>
+            </div>
+            <div>
+                <h2>Editor 2</h2>
+                <div id="editor2" class="editor"></div>
+            </div>
+        </div>
+        <script type="module" src="/src/main.ts"></script>
+    </body>
+</html>
