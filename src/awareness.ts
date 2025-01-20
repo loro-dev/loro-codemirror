@@ -44,7 +44,7 @@ export const loroCursorTheme = EditorView.baseTheme({
         borderRadius: "3px",
         whiteSpace: "nowrap",
         userSelect: "none",
-        opacity: "0.7",
+        opacity: "0.9",
     },
     ".loro-selection": {
         opacity: "0.5",

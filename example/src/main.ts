@@ -2,6 +2,7 @@ import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { loroExtension } from "loro-codemirror";
 import { Awareness, LoroDoc } from "loro-crdt";
+import { markdown } from "@codemirror/lang-markdown";
 
 // Create a Loro document
 const doc1 = new LoroDoc();
@@ -41,6 +42,7 @@ new EditorView({
             EditorView.theme({
                 "&": { height: "100%" },
             }),
+            markdown(),
             loroExtension(
                 doc1,
                 {
@@ -61,6 +63,7 @@ new EditorView({
             EditorView.theme({
                 "&": { height: "100%" },
             }),
+            markdown(),
             loroExtension(
                 doc2,
                 {
