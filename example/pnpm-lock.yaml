@@ -11,6 +11,9 @@ importers:
       '@codemirror/commands':
         specifier: ^6.3.3
         version: 6.8.0
+      '@codemirror/lang-javascript':
+        specifier: ^6.2.2
+        version: 6.2.2
       '@codemirror/lang-markdown':
         specifier: ^6.3.2
         version: 6.3.2

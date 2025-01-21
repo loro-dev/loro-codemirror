@@ -7,7 +7,8 @@ import {
     LoroUndoPlugin,
 } from "loro-codemirror";
 import { Awareness, LoroDoc, UndoManager } from "loro-crdt";
-import { minimalSetup } from "codemirror";
+import { basicSetup } from "codemirror";
+import { javascript } from "@codemirror/lang-javascript";
 
 // Create a Loro document
 const doc1 = new LoroDoc();
@@ -49,7 +50,8 @@ new EditorView({
             EditorView.theme({
                 "&": { height: "100%", fontSize: "18px" },
             }),
-            minimalSetup,
+            basicSetup,
+            javascript({ typescript: true }),
             LoroExtensions(
                 doc1,
                 {
@@ -70,7 +72,8 @@ new EditorView({
             EditorView.theme({
                 "&": { height: "100%", fontSize: "18px" },
             }),
-            minimalSetup,
+            basicSetup,
+            javascript({ typescript: true }),
             LoroSyncPlugin(doc2),
             LoroAwarenessPlugin(doc2, awareness2, {
                 name: "User 2",
