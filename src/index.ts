@@ -1,9 +1,9 @@
-import { Extension } from "@codemirror/state";
+import { Extension, Prec } from "@codemirror/state";
 import { Awareness, LoroDoc, UndoConfig, UndoManager } from "loro-crdt";
 import {
     createCursorLayer,
     createSelectionLayer,
-    LoroAwarenessPlugin,
+    AwarenessPlugin,
     remoteAwarenessStateField,
     RemoteAwarenessPlugin as RemoteAwarenessPlugin,
     UserState,
@@ -12,22 +12,76 @@ import {
 } from "./awareness";
 import { LoroSyncPluginValue } from "./sync";
 import { keymap, ViewPlugin } from "@codemirror/view";
-import { undoKeyMap, undoManagerStateField, UndoPluginValue } from "./undo";
+import {
+    undo,
+    undoKeyMap,
+    redo,
+    undoManagerStateField,
+    UndoPluginValue,
+} from "./undo";
 
-export function loroExtension(
+export { undo, redo };
+
+export const LoroSyncPlugin = (doc: LoroDoc): Extension => {
+    return ViewPlugin.define((view) => new LoroSyncPluginValue(view, doc));
+};
+
+export const LoroAwarenessPlugin = (
+    doc: LoroDoc,
+    awareness: Awareness,
+    user: UserState
+): Extension[] => {
+    return [
+        remoteAwarenessStateField,
+        createCursorLayer(),
+        createSelectionLayer(),
+        ViewPlugin.define(
+            (view) =>
+                new AwarenessPlugin(
+                    view,
+                    doc,
+                    user,
+                    awareness as Awareness<AwarenessState>
+                )
+        ),
+        ViewPlugin.define(
+            (view) =>
+                new RemoteAwarenessPlugin(
+                    view,
+                    doc,
+                    awareness as Awareness<AwarenessState>
+                )
+        ),
+        loroCursorTheme,
+    ];
+};
+
+export const LoroUndoPlugin = (
+    doc: LoroDoc,
+    undoManager: UndoManager
+): Extension[] => {
+    return [
+        undoManagerStateField.init(() => undoManager),
+        keymap.of([...undoKeyMap]),
+        ViewPlugin.define(
+            (view) => new UndoPluginValue(view, doc, undoManager)
+        ),
+    ];
+};
+
+export function LoroExtensions(
     doc: LoroDoc,
     awareness?: { user: UserState; awareness: Awareness },
-    undoConfig?: UndoConfig
+    undoManager?: UndoManager
 ): Extension {
     let extension = [
         ViewPlugin.define((view) => new LoroSyncPluginValue(view, doc))
             .extension,
     ];
-    if (undoConfig) {
-        const undoManager = new UndoManager(doc, undoConfig);
+    if (undoManager) {
         extension = extension.concat([
             undoManagerStateField.init(() => undoManager),
-            keymap.of([...undoKeyMap]),
+            Prec.high(keymap.of([...undoKeyMap])),
             ViewPlugin.define(
                 (view) => new UndoPluginValue(view, doc, undoManager)
             ).extension,
@@ -40,7 +94,7 @@ export function loroExtension(
             createSelectionLayer(),
             ViewPlugin.define(
                 (view) =>
-                    new LoroAwarenessPlugin(
+                    new AwarenessPlugin(
                         view,
                         doc,
                         awareness.user,

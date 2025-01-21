@@ -1,14 +1,21 @@
 import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
-import { loroExtension } from "loro-codemirror";
-import { Awareness, LoroDoc } from "loro-crdt";
-import { markdown } from "@codemirror/lang-markdown";
+import {
+    LoroExtensions,
+    LoroAwarenessPlugin,
+    LoroSyncPlugin,
+    LoroUndoPlugin,
+} from "loro-codemirror";
+import { Awareness, LoroDoc, UndoManager } from "loro-crdt";
+import { minimalSetup } from "codemirror";
 
 // Create a Loro document
 const doc1 = new LoroDoc();
 const awareness1: Awareness = new Awareness(doc1.peerIdStr);
+const undoManager1 = new UndoManager(doc1, {});
 const doc2 = new LoroDoc();
 const awareness2: Awareness = new Awareness(doc2.peerIdStr);
+const undoManager2 = new UndoManager(doc2, {});
 
 doc1.subscribeLocalUpdates((update) => {
     doc2.import(update);
@@ -42,14 +49,14 @@ new EditorView({
             EditorView.theme({
                 "&": { height: "100%" },
             }),
-            markdown(),
-            loroExtension(
+            minimalSetup,
+            LoroExtensions(
                 doc1,
                 {
                     user: { name: "Editor 1", colorClassName: "user1" },
                     awareness: awareness1,
                 },
-                {}
+                undoManager1
             ),
         ],
     }),
@@ -63,15 +70,13 @@ new EditorView({
             EditorView.theme({
                 "&": { height: "100%" },
             }),
-            markdown(),
-            loroExtension(
-                doc2,
-                {
-                    user: { name: "Editor 2", colorClassName: "user2" },
-                    awareness: awareness2,
-                },
-                {}
-            ),
+            minimalSetup,
+            LoroSyncPlugin(doc2),
+            LoroAwarenessPlugin(doc2, awareness2, {
+                name: "Editor 2",
+                colorClassName: "user2",
+            }),
+            LoroUndoPlugin(doc2, undoManager2),
         ],
     }),
     parent: document.querySelector("#editor2")!,

@@ -1,19 +1,11 @@
 import {
     ChangeSpec,
     EditorSelection,
-    Facet,
     StateEffect,
     StateField,
 } from "@codemirror/state";
 import { EditorView, PluginValue, ViewUpdate } from "@codemirror/view";
-import {
-    Cursor,
-    LoroDoc,
-    Subscription,
-    UndoConfig,
-    UndoManager,
-    Value,
-} from "loro-crdt";
+import { Cursor, LoroDoc, Subscription, UndoManager } from "loro-crdt";
 import { getTextFromDoc, loroSyncAnnotation } from "./sync";
 
 export const undoEffect = StateEffect.define();

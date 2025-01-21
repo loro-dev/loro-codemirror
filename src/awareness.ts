@@ -332,7 +332,7 @@ export interface CursorPosition {
     user?: UserState;
 }
 
-export class LoroAwarenessPlugin implements PluginValue {
+export class AwarenessPlugin implements PluginValue {
     sub: Subscription;
 
     constructor(
@@ -341,18 +341,6 @@ export class LoroAwarenessPlugin implements PluginValue {
         public user: UserState,
         public awareness: Awareness<AwarenessState>
     ) {
-        // const selection = this.view.state.selection.main;
-        // const cursorState = getCursorState(
-        //     doc,
-        //     selection.head,
-        //     selection.anchor
-        // );
-        // this.awareness.setLocalState({
-        //     type: "update",
-        //     uid: this.doc.peerIdStr,
-        //     cursor: cursorState,
-        //     user,
-        // });
         this.sub = this.doc.subscribe((e) => {
             if (e.by === "local") {
                 // update remote cursor position
