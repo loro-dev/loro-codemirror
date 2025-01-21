@@ -47,13 +47,13 @@ new EditorView({
     state: EditorState.create({
         extensions: [
             EditorView.theme({
-                "&": { height: "100%" },
+                "&": { height: "100%", fontSize: "18px" },
             }),
             minimalSetup,
             LoroExtensions(
                 doc1,
                 {
-                    user: { name: "Editor 1", colorClassName: "user1" },
+                    user: { name: "User 1", colorClassName: "user1" },
                     awareness: awareness1,
                 },
                 undoManager1
@@ -68,12 +68,12 @@ new EditorView({
     state: EditorState.create({
         extensions: [
             EditorView.theme({
-                "&": { height: "100%" },
+                "&": { height: "100%", fontSize: "18px" },
             }),
             minimalSetup,
             LoroSyncPlugin(doc2),
             LoroAwarenessPlugin(doc2, awareness2, {
-                name: "Editor 2",
+                name: "User 2",
                 colorClassName: "user2",
             }),
             LoroUndoPlugin(doc2, undoManager2),

@@ -62,7 +62,7 @@ export const LoroUndoPlugin = (
 ): Extension[] => {
     return [
         undoManagerStateField.init(() => undoManager),
-        keymap.of([...undoKeyMap]),
+        Prec.high(keymap.of([...undoKeyMap])),
         ViewPlugin.define(
             (view) => new UndoPluginValue(view, doc, undoManager)
         ),

@@ -44,7 +44,7 @@ export const loroCursorTheme = EditorView.baseTheme({
         borderRadius: "3px",
         whiteSpace: "nowrap",
         userSelect: "none",
-        opacity: "0.9",
+        opacity: "0.7",
     },
     ".loro-selection": {
         opacity: "0.5",
@@ -55,7 +55,7 @@ export type AwarenessState =
     | {
           type: "update";
           uid: string;
-          cursor: { anchor?: Uint8Array; head: Uint8Array };
+          cursor: { anchor: Uint8Array; head?: Uint8Array };
           user?: {
               name: string;
               colorClassName: string;
@@ -75,7 +75,7 @@ type CursorEffect =
     | {
           type: "update";
           peer: string;
-          cursor: { anchor?: number; head: number };
+          cursor: { anchor: number; head?: number };
           user?: UserState;
       }
     | {
@@ -141,7 +141,7 @@ export const createCursorLayer = (): Extension => {
             }
             return Array.from(remoteStates.values()).flatMap((state) => {
                 const selectionRange = EditorSelection.cursor(
-                    state.cursor.head
+                    state.cursor.anchor
                 );
                 return RemoteCursorMarker.createCursor(
                     view,
@@ -168,13 +168,13 @@ export const createSelectionLayer = (): Extension =>
             return Array.from(remoteStates.entries())
                 .filter(
                     ([_, state]) =>
-                        state.cursor.anchor !== undefined &&
+                        state.cursor.head !== undefined &&
                         state.cursor.anchor !== state.cursor.head
                 )
                 .flatMap(([_, state]) => {
                     const selectionRange = EditorSelection.range(
-                        state.cursor.anchor as number,
-                        state.cursor.head
+                        state.cursor.anchor,
+                        state.cursor.head!
                     );
                     const markers = RectangleMarker.forRange(
                         view,
@@ -263,7 +263,7 @@ export class RemoteCursorMarker implements LayerMarker {
     ): Rect | null {
         const cappedPositionHead = Math.max(
             0,
-            Math.min(view.state.doc.length, position.head)
+            Math.min(view.state.doc.length, position.anchor)
         );
         return view.coordsAtPos(cappedPositionHead, position.assoc || 1);
     }
@@ -310,13 +310,13 @@ const getEffects = (
         });
     }
 
-    const head = Cursor.decode(state.cursor.head);
-    const headPos = doc.getCursorPos(head).offset;
-    let anchorPos = headPos;
-    if (state.cursor.anchor) {
+    const anchor = Cursor.decode(state.cursor.anchor);
+    const anchorPos = doc.getCursorPos(anchor).offset;
+    let headPos = anchorPos;
+    if (state.cursor.head) {
         // range
-        const anchor = Cursor.decode(state.cursor.anchor);
-        anchorPos = doc.getCursorPos(anchor).offset;
+        const head = Cursor.decode(state.cursor.head);
+        headPos = doc.getCursorPos(head).offset;
     }
     return remoteAwarenessEffect.of({
         type: "update",
@@ -328,7 +328,7 @@ const getEffects = (
 
 export interface CursorPosition {
     uid: string;
-    cursor: { anchor?: number; head: number };
+    cursor: { anchor: number; head?: number };
     user?: UserState;
 }
 
@@ -380,8 +380,8 @@ export class AwarenessPlugin implements PluginValue {
         if (this.view.hasFocus && !this.doc.isDetached()) {
             const cursorState = getCursorState(
                 this.doc,
-                selection.head,
-                selection.anchor
+                selection.anchor,
+                selection.head
             );
             this.awareness.setLocalState({
                 type: "update",
@@ -429,18 +429,20 @@ export class RemoteAwarenessPlugin implements PluginValue {
     }
 }
 
-const getCursorState = (doc: LoroDoc, head: number, anchor?: number) => {
+const getCursorState = (doc: LoroDoc, anchor: number, head?: number) => {
     if (anchor === head) {
-        anchor = undefined;
+        head = undefined;
     }
-    const headCursor = getTextFromDoc(doc).getCursor(head)?.encode();
-    if (!headCursor) {
+    const anchorCursor = getTextFromDoc(doc).getCursor(anchor)?.encode();
+
+    if (!anchorCursor) {
         throw new Error("cursor head not found");
     }
-    let anchorCursor = undefined;
-    if (anchor) {
-        anchorCursor = getTextFromDoc(doc).getCursor(anchor)?.encode();
+    let headCursor = undefined;
+    if (head !== undefined) {
+        headCursor = getTextFromDoc(doc).getCursor(head)?.encode();
     }
+
     return {
         anchor: anchorCursor,
         head: headCursor,

@@ -4,6 +4,8 @@
 -   Sync cursors with Loro's Awareness and [Cursor](https://loro.dev/docs/tutorial/cursor)
 -   Undo/Redo in collaborative editing
 
+https://github.com/user-attachments/assets/eee4c681-f8e7-4f37-b20d-348578e516b8
+
 ## Usage
 
 ```ts
