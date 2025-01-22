@@ -89,8 +89,10 @@ export class UndoPluginValue implements PluginValue {
                 const headPos = head
                     ? this.doc!.getCursorPos(head).offset
                     : anchorPos;
+                const selection = EditorSelection.single(anchorPos, headPos);
                 this.view.dispatch({
-                    selection: EditorSelection.single(anchorPos, headPos),
+                    selection,
+                    effects: [EditorView.scrollIntoView(selection.ranges[0])],
                 });
             }, 0);
         });
