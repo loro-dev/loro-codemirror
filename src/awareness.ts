@@ -1,30 +1,30 @@
 import {
     EditorView,
-    PluginValue,
+    type PluginValue,
     ViewUpdate,
     layer,
-    LayerMarker,
-    Rect,
+    type LayerMarker,
+    type Rect,
     Direction,
     RectangleMarker,
 } from "@codemirror/view";
 import {
     Awareness,
-    AwarenessListener,
+    type AwarenessListener,
     Cursor,
     LoroDoc,
-    PeerID,
-    Subscription,
+    type PeerID,
+    type Subscription,
 } from "loro-crdt";
 import {
     Annotation,
     EditorSelection,
-    Extension,
+    type Extension,
     SelectionRange,
     StateEffect,
     StateField,
 } from "@codemirror/state";
-import { getTextFromDoc } from "./sync";
+import { getTextFromDoc } from "./sync.ts";
 
 export const loroCursorTheme = EditorView.baseTheme({
     ".loro-cursor": {

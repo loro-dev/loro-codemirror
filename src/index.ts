@@ -1,4 +1,4 @@
-import { Extension, Prec } from "@codemirror/state";
+import { type Extension, Prec } from "@codemirror/state";
 import { Awareness, LoroDoc, UndoManager } from "loro-crdt";
 import {
     createCursorLayer,
@@ -6,11 +6,11 @@ import {
     AwarenessPlugin,
     remoteAwarenessStateField,
     RemoteAwarenessPlugin,
-    UserState,
-    AwarenessState,
+    type UserState,
+    type AwarenessState,
     loroCursorTheme,
-} from "./awareness";
-import { LoroSyncPluginValue } from "./sync";
+} from "./awareness.ts";
+import { LoroSyncPluginValue } from "./sync.ts";
 import { keymap, ViewPlugin } from "@codemirror/view";
 import {
     undo,
@@ -18,7 +18,7 @@ import {
     redo,
     undoManagerStateField,
     UndoPluginValue,
-} from "./undo";
+} from "./undo.ts";
 
 export { undo, redo };
 

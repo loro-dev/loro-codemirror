@@ -1,6 +1,11 @@
-import { Annotation, ChangeSpec } from "@codemirror/state";
-import { EditorView, PluginValue, ViewUpdate } from "@codemirror/view";
-import { LoroDoc, LoroEventBatch, LoroText, Subscription } from "loro-crdt";
+import { Annotation, type ChangeSpec } from "@codemirror/state";
+import { EditorView, type PluginValue, ViewUpdate } from "@codemirror/view";
+import {
+    LoroDoc,
+    type LoroEventBatch,
+    LoroText,
+    type Subscription,
+} from "loro-crdt";
 
 export const loroSyncAnnotation = Annotation.define();
 
