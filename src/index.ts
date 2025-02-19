@@ -12,15 +12,10 @@ import {
 } from "./awareness.ts";
 import { LoroSyncPluginValue } from "./sync.ts";
 import { keymap, ViewPlugin } from "@codemirror/view";
-import {
-    undo,
-    undoKeyMap,
-    redo,
-    undoManagerStateField,
-    UndoPluginValue,
-} from "./undo.ts";
+import { undoKeyMap, undoManagerStateField, UndoPluginValue } from "./undo.ts";
 
-export { undo, redo };
+export { undo, redo } from "./undo.ts";
+export { getTextFromDoc } from "./sync.ts";
 
 export const LoroSyncPlugin = (doc: LoroDoc): Extension => {
     return ViewPlugin.define((view) => new LoroSyncPluginValue(view, doc));

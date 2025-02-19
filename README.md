@@ -36,4 +36,6 @@ new EditorView({
 });
 ```
 
-You can find the example [here](https://github.com/loro-dev/loro-codemirror/tree/main/example)
+You can find the example [here](https://github.com/loro-dev/loro-codemirror/tree/main/example).
+
+Note that due to limitations of the Codemirror API, you’ll need to set the initial document yourself.

@@ -5,6 +5,7 @@ import {
     LoroAwarenessPlugin,
     LoroSyncPlugin,
     LoroUndoPlugin,
+    getTextFromDoc,
 } from "loro-codemirror";
 import { Awareness, LoroDoc, UndoManager } from "loro-crdt";
 import { basicSetup } from "codemirror";
@@ -45,6 +46,7 @@ awareness2.addListener((updates, origin) => {
 
 // Create the first editor
 new EditorView({
+    doc: getTextFromDoc(doc1).toString(),
     state: EditorState.create({
         extensions: [
             EditorView.theme({
@@ -67,6 +69,7 @@ new EditorView({
 
 // Create the second editor
 new EditorView({
+    doc: getTextFromDoc(doc2).toString(),
     state: EditorState.create({
         extensions: [
             EditorView.theme({
