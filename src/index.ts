@@ -1,11 +1,11 @@
 import { Extension, Prec } from "@codemirror/state";
-import { Awareness, LoroDoc, UndoConfig, UndoManager } from "loro-crdt";
+import { Awareness, LoroDoc, UndoManager } from "loro-crdt";
 import {
     createCursorLayer,
     createSelectionLayer,
     AwarenessPlugin,
     remoteAwarenessStateField,
-    RemoteAwarenessPlugin as RemoteAwarenessPlugin,
+    RemoteAwarenessPlugin,
     UserState,
     AwarenessState,
     loroCursorTheme,

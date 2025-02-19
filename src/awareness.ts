@@ -20,7 +20,6 @@ import {
     Annotation,
     EditorSelection,
     Extension,
-    Facet,
     SelectionRange,
     StateEffect,
     StateField,
