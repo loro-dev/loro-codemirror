@@ -1,11 +1,11 @@
 import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import {
-    LoroExtensions,
+    getTextFromDoc,
     LoroAwarenessPlugin,
+    LoroExtensions,
     LoroSyncPlugin,
     LoroUndoPlugin,
-    getTextFromDoc,
 } from "loro-codemirror";
 import { Awareness, LoroDoc, UndoManager } from "loro-crdt";
 import { basicSetup } from "codemirror";
@@ -22,6 +22,7 @@ const undoManager2 = new UndoManager(doc2, {});
 doc1.subscribeLocalUpdates((update) => {
     doc2.import(update);
 });
+doc1.getText("codemirror").insert(0, "hello");
 doc2.subscribeLocalUpdates((update) => {
     doc1.import(update);
 });
@@ -46,7 +47,6 @@ awareness2.addListener((updates, origin) => {
 
 // Create the first editor
 new EditorView({
-    doc: getTextFromDoc(doc1).toString(),
     state: EditorState.create({
         extensions: [
             EditorView.theme({
@@ -60,7 +60,7 @@ new EditorView({
                     user: { name: "User 1", colorClassName: "user1" },
                     awareness: awareness1,
                 },
-                undoManager1
+                undoManager1,
             ),
         ],
     }),
@@ -69,7 +69,6 @@ new EditorView({
 
 // Create the second editor
 new EditorView({
-    doc: getTextFromDoc(doc2).toString(),
     state: EditorState.create({
         extensions: [
             EditorView.theme({
