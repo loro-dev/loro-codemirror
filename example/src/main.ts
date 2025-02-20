@@ -22,7 +22,9 @@ const undoManager2 = new UndoManager(doc2, {});
 doc1.subscribeLocalUpdates((update) => {
     doc2.import(update);
 });
-doc1.getText("codemirror").insert(0, "hello");
+// Initialize the document
+getTextFromDoc(doc1).insert(0, "hello");
+doc1.commit();
 doc2.subscribeLocalUpdates((update) => {
     doc1.import(update);
 });
