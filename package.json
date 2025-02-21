@@ -1,6 +1,6 @@
 {
     "name": "loro-codemirror",
-    "version": "0.1.2",
+    "version": "0.1.3",
     "description": "A CodeMirror plugin for loro",
     "type": "module",
     "main": "dist/index.js",
