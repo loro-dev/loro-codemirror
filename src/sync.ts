@@ -1,6 +1,11 @@
-import { Annotation, ChangeSpec } from "@codemirror/state";
-import { EditorView, PluginValue, ViewUpdate } from "@codemirror/view";
-import { LoroDoc, LoroEventBatch, LoroText, Subscription } from "loro-crdt";
+import { Annotation, type ChangeSpec } from "@codemirror/state";
+import { EditorView, type PluginValue, ViewUpdate } from "@codemirror/view";
+import {
+    LoroDoc,
+    type LoroEventBatch,
+    LoroText,
+    type Subscription,
+} from "loro-crdt";
 
 export const loroSyncAnnotation = Annotation.define();
 
@@ -10,8 +15,22 @@ export const getTextFromDoc = (doc: LoroDoc): LoroText => {
 
 export class LoroSyncPluginValue implements PluginValue {
     sub?: Subscription;
+    private isInitDispatch = false;
     constructor(private view: EditorView, private doc: LoroDoc) {
         this.sub = doc.subscribe(this.onRemoteUpdate);
+        Promise.resolve().then(() => {
+            this.isInitDispatch = true;
+            const text = getTextFromDoc(this.doc);
+            view.dispatch({
+                changes: [
+                    {
+                        from: 0,
+                        to: 0,
+                        insert: text.toString(),
+                    },
+                ],
+            });
+        });
     }
 
     onRemoteUpdate = (e: LoroEventBatch) => {
@@ -64,11 +83,16 @@ export class LoroSyncPluginValue implements PluginValue {
     };
 
     update(update: ViewUpdate): void {
+        if (this.isInitDispatch) {
+            this.isInitDispatch = false;
+            return;
+        }
+
         if (
             !update.docChanged ||
             (update.transactions.length > 0 &&
                 (update.transactions[0].annotation(loroSyncAnnotation) ===
-                    this ||
+                        this ||
                     update.transactions[0].annotation(loroSyncAnnotation) ===
                         "undo"))
         ) {

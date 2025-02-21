@@ -1,26 +1,21 @@
-import { Extension, Prec } from "@codemirror/state";
-import { Awareness, LoroDoc, UndoConfig, UndoManager } from "loro-crdt";
+import { type Extension, Prec } from "@codemirror/state";
+import { Awareness, LoroDoc, UndoManager } from "loro-crdt";
 import {
     createCursorLayer,
     createSelectionLayer,
     AwarenessPlugin,
     remoteAwarenessStateField,
-    RemoteAwarenessPlugin as RemoteAwarenessPlugin,
-    UserState,
-    AwarenessState,
+    RemoteAwarenessPlugin,
+    type UserState,
+    type AwarenessState,
     loroCursorTheme,
-} from "./awareness";
-import { LoroSyncPluginValue } from "./sync";
+} from "./awareness.ts";
+import { LoroSyncPluginValue } from "./sync.ts";
 import { keymap, ViewPlugin } from "@codemirror/view";
-import {
-    undo,
-    undoKeyMap,
-    redo,
-    undoManagerStateField,
-    UndoPluginValue,
-} from "./undo";
+import { undoKeyMap, undoManagerStateField, UndoPluginValue } from "./undo.ts";
 
-export { undo, redo };
+export { undo, redo } from "./undo.ts";
+export { getTextFromDoc } from "./sync.ts";
 
 export const LoroSyncPlugin = (doc: LoroDoc): Extension => {
     return ViewPlugin.define((view) => new LoroSyncPluginValue(view, doc));

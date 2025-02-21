@@ -1,8 +1,9 @@
 # Codemirror Binding for Loro
 
--   Sync document state with Loro
--   Sync cursors with Loro's Awareness and [Cursor](https://loro.dev/docs/tutorial/cursor)
--   Undo/Redo in collaborative editing
+- Sync document state with Loro
+- Sync cursors with Loro's Awareness and
+  [Cursor](https://loro.dev/docs/tutorial/cursor)
+- Undo/Redo in collaborative editing
 
 ## Usage
 
@@ -28,7 +29,7 @@ new EditorView({
                     user: { name: "Bob", colorClassName: "user1" },
                 },
                 // optional LoroUndoPlugin
-                undoManager
+                undoManager,
             ),
         ],
     }),
@@ -36,4 +37,5 @@ new EditorView({
 });
 ```
 
-You can find the example [here](https://github.com/loro-dev/loro-codemirror/tree/main/example)
+You can find the example
+[here](https://github.com/loro-dev/loro-codemirror/tree/main/example).
