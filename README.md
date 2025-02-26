@@ -1,3 +1,5 @@
+![NPM Version](https://img.shields.io/npm/v/loro-codemirror)
+
 # Codemirror Binding for Loro
 
 - Sync document state with Loro
