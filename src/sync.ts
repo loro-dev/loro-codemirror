@@ -20,12 +20,16 @@ export class LoroSyncPluginValue implements PluginValue {
         this.sub = doc.subscribe(this.onRemoteUpdate);
         Promise.resolve().then(() => {
             this.isInitDispatch = true;
+            const currentText = this.view.state.doc.toString();
             const text = getTextFromDoc(this.doc);
+            if (currentText === text.toString()) {
+                return
+            }
             view.dispatch({
                 changes: [
                     {
                         from: 0,
-                        to: 0,
+                        to: this.view.state.doc.length,
                         insert: text.toString(),
                     },
                 ],
