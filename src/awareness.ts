@@ -52,18 +52,18 @@ export const loroCursorTheme = EditorView.baseTheme({
 
 export type AwarenessState =
     | {
-          type: "update";
-          uid: string;
-          cursor: { anchor: Uint8Array; head?: Uint8Array };
-          user?: {
-              name: string;
-              colorClassName: string;
-          };
-      }
+        type: "update";
+        uid: string;
+        cursor: { anchor: Uint8Array; head?: Uint8Array };
+        user?: {
+            name: string;
+            colorClassName: string;
+        };
+    }
     | {
-          type: "delete";
-          uid: string;
-      };
+        type: "delete";
+        uid: string;
+    };
 
 export interface UserState {
     name: string;
@@ -72,19 +72,19 @@ export interface UserState {
 
 type CursorEffect =
     | {
-          type: "update";
-          peer: string;
-          cursor: { anchor: number; head?: number };
-          user?: UserState;
-      }
+        type: "update";
+        peer: string;
+        cursor: { anchor: number; head?: number };
+        user?: UserState;
+    }
     | {
-          type: "delete";
-          peer: string;
-      }
+        type: "delete";
+        peer: string;
+    }
     | {
-          type: "checkout";
-          checkout: boolean;
-      };
+        type: "checkout";
+        checkout: boolean;
+    };
 
 // We should use layer https://github.com/codemirror/dev/issues/989
 export const remoteAwarenessAnnotation = Annotation.define<undefined>();
@@ -195,7 +195,7 @@ export class RemoteCursorMarker implements LayerMarker {
         private height: number,
         private name: string,
         private colorClassName: string
-    ) {}
+    ) { }
 
     draw(): HTMLElement {
         const elt = document.createElement("div");
@@ -338,7 +338,8 @@ export class AwarenessPlugin implements PluginValue {
         public view: EditorView,
         public doc: LoroDoc,
         public user: UserState,
-        public awareness: Awareness<AwarenessState>
+        public awareness: Awareness<AwarenessState>,
+        private getUserId?: () => string
     ) {
         this.sub = this.doc.subscribe((e) => {
             if (e.by === "local") {
@@ -384,7 +385,7 @@ export class AwarenessPlugin implements PluginValue {
             );
             this.awareness.setLocalState({
                 type: "update",
-                uid: this.doc.peerIdStr,
+                uid: this.getUserId ? this.getUserId() : this.doc.peerIdStr,
                 cursor: cursorState,
                 user: this.user,
             });
@@ -392,7 +393,7 @@ export class AwarenessPlugin implements PluginValue {
             // when checkout or blur
             this.awareness.setLocalState({
                 type: "delete",
-                uid: this.doc.peerIdStr,
+                uid: this.getUserId ? this.getUserId() : this.doc.peerIdStr,
             });
         }
     }
@@ -401,7 +402,7 @@ export class AwarenessPlugin implements PluginValue {
         this.sub?.();
         this.awareness.setLocalState({
             type: "delete",
-            uid: this.doc.peerIdStr,
+            uid: this.getUserId ? this.getUserId() : this.doc.peerIdStr,
         });
     }
 }
