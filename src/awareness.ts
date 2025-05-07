@@ -13,6 +13,7 @@ import {
     type AwarenessListener,
     Cursor,
     LoroDoc,
+    LoroText,
     type PeerID,
     type Subscription,
 } from "loro-crdt";
@@ -24,7 +25,6 @@ import {
     StateEffect,
     StateField,
 } from "@codemirror/state";
-import { getTextFromDoc } from "./sync.ts";
 
 export const loroCursorTheme = EditorView.baseTheme({
     ".loro-cursor": {
@@ -52,18 +52,18 @@ export const loroCursorTheme = EditorView.baseTheme({
 
 export type AwarenessState =
     | {
-        type: "update";
-        uid: string;
-        cursor: { anchor: Uint8Array; head?: Uint8Array };
-        user?: {
-            name: string;
-            colorClassName: string;
-        };
-    }
+          type: "update";
+          uid: string;
+          cursor: { anchor: Uint8Array; head?: Uint8Array };
+          user?: {
+              name: string;
+              colorClassName: string;
+          };
+      }
     | {
-        type: "delete";
-        uid: string;
-    };
+          type: "delete";
+          uid: string;
+      };
 
 export interface UserState {
     name: string;
@@ -72,19 +72,19 @@ export interface UserState {
 
 type CursorEffect =
     | {
-        type: "update";
-        peer: string;
-        cursor: { anchor: number; head?: number };
-        user?: UserState;
-    }
+          type: "update";
+          peer: string;
+          cursor: { anchor: number; head?: number };
+          user?: UserState;
+      }
     | {
-        type: "delete";
-        peer: string;
-    }
+          type: "delete";
+          peer: string;
+      }
     | {
-        type: "checkout";
-        checkout: boolean;
-    };
+          type: "checkout";
+          checkout: boolean;
+      };
 
 // We should use layer https://github.com/codemirror/dev/issues/989
 export const remoteAwarenessAnnotation = Annotation.define<undefined>();
@@ -195,7 +195,7 @@ export class RemoteCursorMarker implements LayerMarker {
         private height: number,
         private name: string,
         private colorClassName: string
-    ) { }
+    ) {}
 
     draw(): HTMLElement {
         const elt = document.createElement("div");
@@ -339,7 +339,8 @@ export class AwarenessPlugin implements PluginValue {
         public doc: LoroDoc,
         public user: UserState,
         public awareness: Awareness<AwarenessState>,
-        private getUserId?: () => string
+        private getUserId: (() => string) | undefined,
+        private getTextFromDoc: (doc: LoroDoc) => LoroText
     ) {
         this.sub = this.doc.subscribe((e) => {
             if (e.by === "local") {
@@ -381,7 +382,8 @@ export class AwarenessPlugin implements PluginValue {
             const cursorState = getCursorState(
                 this.doc,
                 selection.anchor,
-                selection.head
+                selection.head,
+                this.getTextFromDoc
             );
             this.awareness.setLocalState({
                 type: "update",
@@ -429,7 +431,12 @@ export class RemoteAwarenessPlugin implements PluginValue {
     }
 }
 
-const getCursorState = (doc: LoroDoc, anchor: number, head?: number) => {
+const getCursorState = (
+    doc: LoroDoc,
+    anchor: number,
+    head: number | undefined,
+    getTextFromDoc: (doc: LoroDoc) => LoroText
+) => {
     if (anchor === head) {
         head = undefined;
     }

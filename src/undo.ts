@@ -5,8 +5,14 @@ import {
     StateField,
 } from "@codemirror/state";
 import { EditorView, type PluginValue, ViewUpdate } from "@codemirror/view";
-import { Cursor, LoroDoc, type Subscription, UndoManager } from "loro-crdt";
-import { getTextFromDoc, loroSyncAnnotation } from "./sync.ts";
+import {
+    Cursor,
+    LoroDoc,
+    LoroText,
+    type Subscription,
+    UndoManager,
+} from "loro-crdt";
+import { loroSyncAnnotation } from "./sync.ts";
 
 export const undoEffect = StateEffect.define();
 export const redoEffect = StateEffect.define();
@@ -45,15 +51,20 @@ export class UndoPluginValue implements PluginValue {
     constructor(
         public view: EditorView,
         public doc: LoroDoc,
-        private undoManager: UndoManager
+        private undoManager: UndoManager,
+        private getTextFromDoc: (doc: LoroDoc) => LoroText
     ) {
         this.sub = doc.subscribe((e) => {
             if (e.origin !== "undo") return;
 
             let changes: ChangeSpec[] = [];
             let pos = 0;
-            for (let { diff } of e.events) {
+            for (let { diff, target } of e.events) {
+                const text = this.getTextFromDoc(this.doc);
+                // Skip if the event is not a text event
                 if (diff.type !== "text") return;
+                // Skip if the event is not for the current document
+                if (target !== text.id) return;
                 const textDiff = diff.diff;
                 for (const delta of textDiff) {
                     if (delta.insert) {
@@ -102,10 +113,10 @@ export class UndoPluginValue implements PluginValue {
             let selection = this.lastSelection;
             if (!isUndo) {
                 const stateSelection = this.view.state.selection.main;
-                selection.anchor = getTextFromDoc(this.doc).getCursor(
+                selection.anchor = this.getTextFromDoc(this.doc).getCursor(
                     stateSelection.anchor
                 );
-                selection.head = getTextFromDoc(this.doc).getCursor(
+                selection.head = this.getTextFromDoc(this.doc).getCursor(
                     stateSelection.head
                 );
             }
@@ -125,10 +136,10 @@ export class UndoPluginValue implements PluginValue {
     update(update: ViewUpdate): void {
         if (update.selectionSet) {
             this.lastSelection = {
-                anchor: getTextFromDoc(this.doc).getCursor(
+                anchor: this.getTextFromDoc(this.doc).getCursor(
                     update.state.selection.main.anchor
                 ),
-                head: getTextFromDoc(this.doc).getCursor(
+                head: this.getTextFromDoc(this.doc).getCursor(
                     update.state.selection.main.head
                 ),
             };
