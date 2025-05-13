@@ -2,21 +2,21 @@ import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import {
     getTextFromDoc,
-    LoroAwarenessPlugin,
+    LoroEphemeralPlugin,
     LoroExtensions,
     LoroSyncPlugin,
     LoroUndoPlugin,
 } from "loro-codemirror";
-import { Awareness, LoroDoc, UndoManager } from "loro-crdt";
+import { EphemeralStore, LoroDoc, UndoManager } from "loro-crdt";
 import { basicSetup } from "codemirror";
 import { javascript } from "@codemirror/lang-javascript";
 
 // Create a Loro document
 const doc1 = new LoroDoc();
-const awareness1: Awareness = new Awareness(doc1.peerIdStr);
+const ephemeral1: EphemeralStore = new EphemeralStore();
 const undoManager1 = new UndoManager(doc1, {});
 const doc2 = new LoroDoc();
-const awareness2: Awareness = new Awareness(doc2.peerIdStr);
+const ephemeral2: EphemeralStore = new EphemeralStore();
 const undoManager2 = new UndoManager(doc2, {});
 
 doc1.subscribeLocalUpdates((update) => {
@@ -29,22 +29,14 @@ doc2.subscribeLocalUpdates((update) => {
     doc1.import(update);
 });
 
-awareness1.addListener((updates, origin) => {
-    const changes = updates.added
-        .concat(updates.removed)
-        .concat(updates.updated);
-    if (origin === "local") {
-        awareness2.apply(awareness1.encode(changes));
-    }
+// @ts-ignore
+const _sub1 = ephemeral1.subscribeLocalUpdates((update) => {
+    ephemeral2.apply(update);
 });
 
-awareness2.addListener((updates, origin) => {
-    const changes = updates.added
-        .concat(updates.removed)
-        .concat(updates.updated);
-    if (origin === "local") {
-        awareness1.apply(awareness2.encode(changes));
-    }
+// @ts-ignore
+const _sub2 = ephemeral2.subscribeLocalUpdates((update) => {
+    ephemeral1.apply(update);
 });
 
 // Create the first editor
@@ -60,7 +52,7 @@ new EditorView({
                 doc1,
                 {
                     user: { name: "User 1", colorClassName: "user1" },
-                    awareness: awareness1,
+                    ephemeral: ephemeral1
                 },
                 undoManager1,
             ),
@@ -79,7 +71,7 @@ new EditorView({
             basicSetup,
             javascript({ typescript: true }),
             LoroSyncPlugin(doc2),
-            LoroAwarenessPlugin(doc2, awareness2, {
+            LoroEphemeralPlugin(doc2, ephemeral2, {
                 name: "User 2",
                 colorClassName: "user2",
             }),

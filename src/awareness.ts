@@ -16,6 +16,7 @@ import {
     LoroText,
     type PeerID,
     type Subscription,
+    type Value,
 } from "loro-crdt";
 import {
     Annotation,
@@ -49,42 +50,40 @@ export const loroCursorTheme = EditorView.baseTheme({
         opacity: "0.5",
     },
 });
+export type CursorState = { anchor: Uint8Array; head?: Uint8Array };
 
 export type AwarenessState =
     | {
-          type: "update";
-          uid: string;
-          cursor: { anchor: Uint8Array; head?: Uint8Array };
-          user?: {
-              name: string;
-              colorClassName: string;
-          };
-      }
+        type: "update";
+        uid: string;
+        cursor: CursorState;
+        user?: UserState;
+    }
     | {
-          type: "delete";
-          uid: string;
-      };
+        type: "delete";
+        uid: string;
+    };
 
-export interface UserState {
+export type UserState = {
     name: string;
     colorClassName: string;
 }
 
-type CursorEffect =
+export type CursorEffect =
     | {
-          type: "update";
-          peer: string;
-          cursor: { anchor: number; head?: number };
-          user?: UserState;
-      }
+        type: "update";
+        peer: string;
+        cursor: { anchor: number; head?: number };
+        user?: UserState;
+    }
     | {
-          type: "delete";
-          peer: string;
-      }
+        type: "delete";
+        peer: string;
+    }
     | {
-          type: "checkout";
-          checkout: boolean;
-      };
+        type: "checkout";
+        checkout: boolean;
+    };
 
 // We should use layer https://github.com/codemirror/dev/issues/989
 export const remoteAwarenessAnnotation = Annotation.define<undefined>();
@@ -103,7 +102,6 @@ export const remoteAwarenessStateField = StateField.define<{
                     case "update":
                         const { peer: uid, user, cursor } = effect.value;
                         value.remoteCursors.set(uid, {
-                            uid,
                             cursor,
                             user,
                         });
@@ -138,6 +136,7 @@ export const createCursorLayer = (): Extension => {
             if (isCheckout) {
                 return [];
             }
+            console.log("remoteStates:", remoteStates)
             return Array.from(remoteStates.values()).flatMap((state) => {
                 const selectionRange = EditorSelection.cursor(
                     state.cursor.anchor
@@ -195,7 +194,7 @@ export class RemoteCursorMarker implements LayerMarker {
         private height: number,
         private name: string,
         private colorClassName: string
-    ) {}
+    ) { }
 
     draw(): HTMLElement {
         const elt = document.createElement("div");
@@ -326,11 +325,13 @@ const getEffects = (
 };
 
 export interface CursorPosition {
-    uid: string;
     cursor: { anchor: number; head?: number };
     user?: UserState;
 }
 
+/**
+ * @deprecated Use EphemeralPlugin instead
+ */
 export class AwarenessPlugin implements PluginValue {
     sub: Subscription;
 
@@ -431,7 +432,7 @@ export class RemoteAwarenessPlugin implements PluginValue {
     }
 }
 
-const getCursorState = (
+export const getCursorState = (
     doc: LoroDoc,
     anchor: number,
     head: number | undefined,

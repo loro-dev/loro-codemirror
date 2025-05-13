@@ -30,8 +30,8 @@ importers:
         specifier: link:..
         version: link:..
       loro-crdt:
-        specifier: ^1.3.1
-        version: 1.3.1
+        specifier: ^1.5.5
+        version: 1.5.5
     devDependencies:
       typescript:
         specifier: ^5.7.3
@@ -453,8 +453,8 @@ packages:
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
 
-  loro-crdt@1.3.1:
-    resolution: {integrity: sha512-HNkztMAi+RTxIFWlj5asrBkbCnQVUypOOIzgwSug7xcHn7xEReqr0kQPgXFuwWnGRPeBaMC6ew2ccP5Ns5YoAQ==}
+  loro-crdt@1.5.5:
+    resolution: {integrity: sha512-XflGSRTgbFFEpYOc5J2WTVFg5mkEK7Cap+tNFTcIvSAxXQfsLGI8ai+y2PeYPVVbmHSV8NtLwId0QB2aR1kEWQ==}
 
   nanoid@3.3.8:
     resolution: {integrity: sha512-WNLf5Sd8oZxOm+TzppcYk8gVOgP+l58xNy58D0nbUnOxOWRWvlcCV4kUF7ltmI6PsrLl/BgKEyS4mqsGChFN0w==}
@@ -897,7 +897,7 @@ snapshots:
   fsevents@2.3.3:
     optional: true
 
-  loro-crdt@1.3.1: {}
+  loro-crdt@1.5.5: {}
 
   nanoid@3.3.8: {}
 

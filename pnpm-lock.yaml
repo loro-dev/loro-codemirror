@@ -15,8 +15,8 @@ importers:
         specifier: ^6.7.0
         version: 6.36.2
       loro-crdt:
-        specifier: ^1.4.6
-        version: 1.4.6
+        specifier: ^1.5.5
+        version: 1.5.5
     devDependencies:
       typescript:
         specifier: ^5.7.3
@@ -33,8 +33,8 @@ packages:
   '@marijn/find-cluster-break@1.0.2':
     resolution: {integrity: sha512-l0h88YhZFyKdXIFNfSWpyjStDjGHwZ/U7iobcK1cQQD8sejsONdQtTVU+1wVN1PBw40PiiHB1vA5S7VTfQiP9g==}
 
-  loro-crdt@1.4.6:
-    resolution: {integrity: sha512-9YvKzoNE1CpDR/DNSUMolaSkhXdHnChP8uVkfORE3iREKOILUc5OZNipMMMhsnHQesL8HxM8D+2Z3vdXlV48Ew==}
+  loro-crdt@1.5.5:
+    resolution: {integrity: sha512-XflGSRTgbFFEpYOc5J2WTVFg5mkEK7Cap+tNFTcIvSAxXQfsLGI8ai+y2PeYPVVbmHSV8NtLwId0QB2aR1kEWQ==}
 
   style-mod@4.1.2:
     resolution: {integrity: sha512-wnD1HyVqpJUI2+eKZ+eo1UwghftP6yuFheBqqe+bWCotBjC2K1YnteJILRMs3SM4V/0dLEW1SC27MWP5y+mwmw==}
@@ -61,7 +61,7 @@ snapshots:
 
   '@marijn/find-cluster-break@1.0.2': {}
 
-  loro-crdt@1.4.6: {}
+  loro-crdt@1.5.5: {}
 
   style-mod@4.1.2: {}
 
