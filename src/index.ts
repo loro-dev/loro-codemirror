@@ -42,6 +42,7 @@ export const LoroSyncPlugin = (
 };
 
 /**
+ * @deprecated Use LoroEphemeralPlugin instead
  * LoroAwarenessPlugin is a plugin that adds awareness to the editor.
  * It is used to sync the cursor position and selection of the editor with the remote users.
  *
@@ -85,6 +86,17 @@ export const LoroAwarenessPlugin = (
     ];
 };
 
+
+/**
+ * LoroEphemeralPlugin is a plugin that adds ephemeral to the editor.
+ * It is used to sync the cursor position and selection of the editor with the remote users.
+ *
+ * @param doc - LoroDoc instance
+ * @param ephemeral - EphemeralStore instance
+ * @param user - User info
+ * @param getTextFromDoc - Function to get the text from the doc. If not provided, the defaultGetTextFromDoc will be used.
+ * @returns Extension[]
+ */
 export const LoroEphemeralPlugin = (
     doc: LoroDoc,
     ephemeral: EphemeralStore,

@@ -3,26 +3,29 @@ import { Cursor, EphemeralStore, LoroDoc, LoroText, type Subscription } from "lo
 import { getCursorState, type UserState, type CursorState, remoteAwarenessEffect, type CursorPosition, RemoteCursorMarker } from "./awareness.ts";
 import { EditorSelection, StateEffect, StateField, type Extension } from "@codemirror/state";
 
-
 export const ephemeralEffect = StateEffect.define<EphemeralEffect>();
 export const ephemeralStateField = StateField.define<{
-    remoteCursors: Map<string, CursorPosition>;
+    remoteCursors: Map<string, { anchor: number; head?: number }>;
+    remoteUsers: Map<string, UserState | undefined>;
     isCheckout: boolean;
 }>({
     create() {
-        return { remoteCursors: new Map(), isCheckout: false };
+        return { remoteCursors: new Map(), remoteUsers: new Map(), isCheckout: false };
     },
     update(value, tr) {
         for (const effect of tr.effects) {
             if (effect.is(ephemeralEffect)) {
                 switch (effect.value.type) {
-                    case "update":
-                        const { peer, cursor, user } = effect.value;
-                        if (cursor) {
-                            value.remoteCursors.set(peer, { cursor, user });
-                        } else {
-                            value.remoteCursors.delete(peer);
-                        }
+                    case "delete":
+                        value.remoteCursors.delete(effect.value.peer);
+                        break;
+                    case "cursor":
+                        const { peer, cursor } = effect.value;
+                        value.remoteCursors.set(peer, cursor);
+                        break;
+                    case "user":
+                        const { peer: uid, user } = effect.value;
+                        value.remoteUsers.set(uid, user);
                         break;
                     case "checkout":
                         value.isCheckout = effect.value.checkout;
@@ -34,9 +37,15 @@ export const ephemeralStateField = StateField.define<{
 });
 
 type EphemeralEffect = {
-    type: "update";
+    type: "delete";
     peer: string;
-    cursor?: { anchor: number; head?: number };
+} | {
+    type: "cursor";
+    peer: string;
+    cursor: { anchor: number; head?: number };
+} | {
+    type: "user";
+    peer: string;
     user?: UserState;
 } | {
     type: "checkout";
@@ -47,7 +56,6 @@ const getCursorEffect = (
     doc: LoroDoc,
     peer: string,
     state: CursorState,
-    user?: UserState,
 ): StateEffect<EphemeralEffect> | undefined => {
     const anchor = Cursor.decode(state.anchor);
     const anchorPos = doc.getCursorPos(anchor).offset;
@@ -58,16 +66,15 @@ const getCursorEffect = (
         headPos = doc.getCursorPos(head).offset;
     }
     return ephemeralEffect.of({
-        type: "update",
+        type: "cursor",
         peer,
         cursor: { anchor: anchorPos, head: headPos },
-        user,
     });
 }
 
-const STATE_KEY = "cm-state";
 export type EphemeralState = {
-    [key: `${string}-cm-state`]: { cursor: CursorState, user?: UserState };
+    [key: `${string}-cm-cursor`]: CursorState;
+    [key: `${string}-cm-user`]: UserState | undefined;
 };
 
 const isRemoteCursorUpdate = (update: ViewUpdate): boolean => {
@@ -83,21 +90,21 @@ export const createCursorLayer = (): Extension => {
         class: "loro-cursor-layer",
         update: isRemoteCursorUpdate,
         markers: (view) => {
-            const { remoteCursors: remoteStates, isCheckout } =
+            const { remoteCursors, remoteUsers, isCheckout } =
                 view.state.field(ephemeralStateField);
             if (isCheckout) {
                 return [];
             }
-            console.log("remoteStates:", remoteStates)
-            return Array.from(remoteStates.values()).flatMap((state) => {
+            return Array.from(remoteCursors.entries()).flatMap(([peer, state]) => {
                 const selectionRange = EditorSelection.cursor(
-                    state.cursor.anchor
+                    state.anchor
                 );
+                const user = remoteUsers.get(peer);
                 return RemoteCursorMarker.createCursor(
                     view,
                     selectionRange,
-                    state.user?.name || "unknown",
-                    state.user?.colorClassName || ""
+                    user?.name || "unknown",
+                    user?.colorClassName || ""
                 );
             });
         },
@@ -110,25 +117,26 @@ export const createSelectionLayer = (): Extension =>
         class: "loro-selection-layer",
         update: isRemoteCursorUpdate,
         markers: (view) => {
-            const { remoteCursors: remoteStates, isCheckout } =
+            const { remoteCursors, remoteUsers, isCheckout } =
                 view.state.field(ephemeralStateField);
             if (isCheckout) {
                 return [];
             }
-            return Array.from(remoteStates.entries())
+            return Array.from(remoteCursors.entries())
                 .filter(
                     ([_, state]) =>
-                        state.cursor.head !== undefined &&
-                        state.cursor.anchor !== state.cursor.head
+                        state.head !== undefined &&
+                        state.anchor !== state.head
                 )
-                .flatMap(([_, state]) => {
+                .flatMap(([peer, state]) => {
+                    const user = remoteUsers.get(peer);
                     const selectionRange = EditorSelection.range(
-                        state.cursor.anchor,
-                        state.cursor.head!
+                        state.anchor,
+                        state.head!
                     );
                     const markers = RectangleMarker.forRange(
                         view,
-                        `loro-selection ${state.user?.colorClassName || ""}`,
+                        `loro-selection ${user?.colorClassName || ""}`,
                         selectionRange
                     );
                     return markers;
@@ -158,17 +166,16 @@ export class EphemeralPlugin implements PluginValue {
                     if (peer === this.doc.peerIdStr) {
                         continue;
                     }
-                    const state = this.ephemeralStore.get(`${peer}-${STATE_KEY}`);
+                    const state = this.ephemeralStore.get(`${peer}-cm-cursor`);
                     if (state) {
-                        const effect = getCursorEffect(this.doc, peer, state.cursor, state.user);
+                        const effect = getCursorEffect(this.doc, peer, state);
                         if (effect) {
                             effects.push(effect);
                         }
                     } else {
                         effects.push(ephemeralEffect.of({
-                            type: "update",
+                            type: "delete",
                             peer,
-                            cursor: undefined,
                         }));
                     }
                 }
@@ -193,23 +200,29 @@ export class EphemeralPlugin implements PluginValue {
             const effects = [];
             for (const key of e.added.concat(e.updated)) {
                 const peer = key.split("-")[0];
-                if (key.endsWith(`-${STATE_KEY}`)) {
-                    const state = this.ephemeralStore.get(key as keyof EphemeralState)!;
-                    const effect = getCursorEffect(this.doc, peer, state.cursor, state.user);
+                if (key.endsWith(`-cm-cursor`)) {
+                    const state = this.ephemeralStore.get(key as keyof EphemeralState)! as CursorState;
+                    const effect = getCursorEffect(this.doc, peer, state);
                     if (effect) {
                         effects.push(effect);
                     }
+                }
+                if (key.endsWith(`-cm-user`)) {
+                    const user = this.ephemeralStore.get(key as keyof EphemeralState)! as UserState;
+                    effects.push(ephemeralEffect.of({
+                        type: "user",
+                        peer,
+                        user
+                    }));
                 }
             }
 
             for (const key of e.removed) {
                 const peer = key.split("-")[0];
-                if (key.endsWith(`-${STATE_KEY}`)) {
+                if (key.endsWith(`-cm-cursor`)) {
                     effects.push(ephemeralEffect.of({
-                        type: "update",
+                        type: "delete",
                         peer,
-                        cursor: undefined,
-                        user: undefined,
                     }));
                 }
             }
@@ -236,16 +249,18 @@ export class EphemeralPlugin implements PluginValue {
                 selection.head,
                 this.getTextFromDoc
             );
-            this.ephemeralStore.set(`${this.doc.peerIdStr}-${STATE_KEY}`, { cursor: cursorState, user: this.user });
+            this.ephemeralStore.set(`${this.doc.peerIdStr}-cm-cursor`, cursorState);
+            this.ephemeralStore.set(`${this.doc.peerIdStr}-cm-user`, this.user);
         } else {
             // when checkout or blur
-            // this.ephemeralStore.delete(`${this.doc.peerIdStr}-${STATE_KEY}`);
+            this.ephemeralStore.delete(`${this.doc.peerIdStr}-cm-cursor`);
         }
     }
 
     destroy(): void {
         this.sub?.();
         this.ephemeralSub?.();
-        this.ephemeralStore.delete(`${this.doc.peerIdStr}-${STATE_KEY}`);
+        this.ephemeralStore.delete(`${this.doc.peerIdStr}-cm-cursor`);
+        this.ephemeralStore.delete(`${this.doc.peerIdStr}-cm-user`);
     }
 }
