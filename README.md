@@ -23,7 +23,7 @@ new EditorView({
             // ... other extensions
             LoroExtensions(
                 doc,
-                // optional LoroAwarenessPlugin
+                // optional LoroEphemeralPlugin
                 {
                     ephemeral,
                     user: { name: "Bob", colorClassName: "user1" },
