@@ -147,6 +147,7 @@ export const createSelectionLayer = (): Extension =>
 export class EphemeralPlugin implements PluginValue {
     sub: Subscription;
     ephemeralSub: Subscription;
+    initUser: boolean = false;
 
     constructor(
         public view: EditorView,
@@ -250,7 +251,10 @@ export class EphemeralPlugin implements PluginValue {
                 this.getTextFromDoc
             );
             this.ephemeralStore.set(`${this.doc.peerIdStr}-cm-cursor`, cursorState);
-            this.ephemeralStore.set(`${this.doc.peerIdStr}-cm-user`, this.user);
+            if (!this.initUser) {
+                this.ephemeralStore.set(`${this.doc.peerIdStr}-cm-user`, this.user);
+                this.initUser = true;
+            }
         } else {
             // when checkout or blur
             this.ephemeralStore.delete(`${this.doc.peerIdStr}-cm-cursor`);

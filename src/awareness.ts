@@ -136,7 +136,6 @@ export const createCursorLayer = (): Extension => {
             if (isCheckout) {
                 return [];
             }
-            console.log("remoteStates:", remoteStates)
             return Array.from(remoteStates.values()).flatMap((state) => {
                 const selectionRange = EditorSelection.cursor(
                     state.cursor.anchor
