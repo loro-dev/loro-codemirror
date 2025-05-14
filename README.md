@@ -11,10 +11,10 @@
 import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { LoroExtensions } from "loro-codemirror";
-import { Awareness, LoroDoc, UndoManager } from "loro-crdt";
+import { EphemeralStore, LoroDoc, UndoManager } from "loro-crdt";
 
 const doc = new LoroDoc();
-const awareness = new Awareness(doc.peerIdStr);
+const ephemeral = new EphemeralStore();
 const undoManager = new UndoManager(doc, {});
 
 new EditorView({
@@ -25,7 +25,7 @@ new EditorView({
                 doc,
                 // optional LoroAwarenessPlugin
                 {
-                    awareness: awareness,
+                    ephemeral,
                     user: { name: "Bob", colorClassName: "user1" },
                 },
                 // optional LoroUndoPlugin

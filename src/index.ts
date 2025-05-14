@@ -1,8 +1,8 @@
 import { type Extension, Prec } from "@codemirror/state";
-import { Awareness, LoroDoc, LoroText, UndoManager } from "loro-crdt";
+import { Awareness, EphemeralStore, LoroDoc, LoroText, UndoManager } from "loro-crdt";
 import {
-    createCursorLayer,
-    createSelectionLayer,
+    createCursorLayer as createAwarenessCursorLayer,
+    createSelectionLayer as createAwarenessSelectionLayer,
     AwarenessPlugin,
     remoteAwarenessStateField,
     RemoteAwarenessPlugin,
@@ -14,6 +14,8 @@ import { LoroSyncPluginValue } from "./sync.ts";
 import { keymap, ViewPlugin } from "@codemirror/view";
 import { undoKeyMap, undoManagerStateField, UndoPluginValue } from "./undo.ts";
 import { defaultGetTextFromDoc } from "./utils.ts";
+import { createCursorLayer, createSelectionLayer, EphemeralPlugin, ephemeralStateField, type EphemeralState } from "./ephemeral.ts";
+
 
 export { undo, redo } from "./undo.ts";
 
@@ -40,6 +42,7 @@ export const LoroSyncPlugin = (
 };
 
 /**
+ * @deprecated Use LoroEphemeralPlugin instead
  * LoroAwarenessPlugin is a plugin that adds awareness to the editor.
  * It is used to sync the cursor position and selection of the editor with the remote users.
  *
@@ -58,8 +61,8 @@ export const LoroAwarenessPlugin = (
 ): Extension[] => {
     return [
         remoteAwarenessStateField,
-        createCursorLayer(),
-        createSelectionLayer(),
+        createAwarenessCursorLayer(),
+        createAwarenessSelectionLayer(),
         ViewPlugin.define(
             (view) =>
                 new AwarenessPlugin(
@@ -77,6 +80,41 @@ export const LoroAwarenessPlugin = (
                     view,
                     doc,
                     awareness as Awareness<AwarenessState>
+                )
+        ),
+        loroCursorTheme,
+    ];
+};
+
+
+/**
+ * LoroEphemeralPlugin is a plugin that adds ephemeral to the editor.
+ * It is used to sync the cursor position and selection of the editor with the remote users.
+ *
+ * @param doc - LoroDoc instance
+ * @param ephemeral - EphemeralStore instance
+ * @param user - User info
+ * @param getTextFromDoc - Function to get the text from the doc. If not provided, the defaultGetTextFromDoc will be used.
+ * @returns Extension[]
+ */
+export const LoroEphemeralPlugin = (
+    doc: LoroDoc,
+    ephemeral: EphemeralStore,
+    user: UserState,
+    getTextFromDoc?: (doc: LoroDoc) => LoroText
+): Extension[] => {
+    return [
+        ephemeralStateField,
+        createCursorLayer(),
+        createSelectionLayer(),
+        ViewPlugin.define(
+            (view) =>
+                new EphemeralPlugin(
+                    view,
+                    doc,
+                    user,
+                    ephemeral as EphemeralStore<EphemeralState>,
+                    getTextFromDoc ?? defaultGetTextFromDoc
                 )
         ),
         loroCursorTheme,
@@ -108,10 +146,9 @@ export const LoroUndoPlugin = (
 
 export function LoroExtensions(
     doc: LoroDoc,
-    awareness?: {
+    ephemeral?: {
         user: UserState;
-        awareness: Awareness;
-        getUserId?: () => string;
+        ephemeral: EphemeralStore;
     },
     undoManager?: UndoManager,
     getTextFromDoc?: (doc: LoroDoc) => LoroText
@@ -133,28 +170,19 @@ export function LoroExtensions(
             ).extension,
         ]);
     }
-    if (awareness) {
+    if (ephemeral) {
         extension = extension.concat([
-            remoteAwarenessStateField,
+            ephemeralStateField,
             createCursorLayer(),
             createSelectionLayer(),
             ViewPlugin.define(
                 (view) =>
-                    new AwarenessPlugin(
+                    new EphemeralPlugin(
                         view,
                         doc,
-                        awareness.user,
-                        awareness.awareness as Awareness<AwarenessState>,
-                        awareness.getUserId,
+                        ephemeral.user,
+                        ephemeral.ephemeral as EphemeralStore<EphemeralState>,
                         getTextFromDoc
-                    )
-            ),
-            ViewPlugin.define(
-                (view) =>
-                    new RemoteAwarenessPlugin(
-                        view,
-                        doc,
-                        awareness.awareness as Awareness<AwarenessState>
                     )
             ),
             loroCursorTheme,
