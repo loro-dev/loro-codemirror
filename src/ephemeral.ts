@@ -182,15 +182,14 @@ export class EphemeralPlugin implements PluginValue {
                 }
                 if (effects.length > 0) {
                     // Defer the dispatch to avoid conflicts with ongoing updates
-                    requestAnimationFrame(() => {
+                    setTimeout(() => {
                         this.view.dispatch({
                             effects,
                         });
                     });
                 }
             } else if (e.by === "checkout") {
-                // TODO: better way
-                requestAnimationFrame(() => {
+                setTimeout(() => {
                     this.view.dispatch({
                         effects: [
                             ephemeralEffect.of({
@@ -237,7 +236,7 @@ export class EphemeralPlugin implements PluginValue {
 
             if (effects.length > 0) {
                 // Defer the dispatch to avoid conflicts with ongoing updates
-                requestAnimationFrame(() => {
+                setTimeout(() => {
                     this.view.dispatch({
                         effects
                     })
