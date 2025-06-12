@@ -162,7 +162,7 @@ export class EphemeralPlugin implements PluginValue {
                 const { remoteCursors: remoteStates, isCheckout } =
                     view.state.field(ephemeralStateField);
                 if (isCheckout) return;
-                const effects = [];
+                const effects: StateEffect<EphemeralEffect>[] = [];
                 for (const peer of remoteStates.keys()) {
                     if (peer === this.doc.peerIdStr) {
                         continue;
@@ -180,25 +180,32 @@ export class EphemeralPlugin implements PluginValue {
                         }));
                     }
                 }
-                this.view.dispatch({
-                    effects,
-                });
+                if (effects.length > 0) {
+                    // Defer the dispatch to avoid conflicts with ongoing updates
+                    requestAnimationFrame(() => {
+                        this.view.dispatch({
+                            effects,
+                        });
+                    });
+                }
             } else if (e.by === "checkout") {
                 // TODO: better way
-                this.view.dispatch({
-                    effects: [
-                        remoteAwarenessEffect.of({
-                            type: "checkout",
-                            checkout: this.doc.isDetached(),
-                        }),
-                    ],
+                requestAnimationFrame(() => {
+                    this.view.dispatch({
+                        effects: [
+                            ephemeralEffect.of({
+                                type: "checkout",
+                                checkout: this.doc.isDetached(),
+                            }),
+                        ],
+                    });
                 });
             }
         });
 
         this.ephemeralSub = this.ephemeralStore.subscribe((e) => {
             if (e.by === "local") return;
-            const effects = [];
+            const effects: StateEffect<EphemeralEffect>[] = [];
             for (const key of e.added.concat(e.updated)) {
                 const peer = key.split("-")[0];
                 if (key.endsWith(`-cm-cursor`)) {
@@ -228,9 +235,14 @@ export class EphemeralPlugin implements PluginValue {
                 }
             }
 
-            this.view.dispatch({
-                effects
-            })
+            if (effects.length > 0) {
+                // Defer the dispatch to avoid conflicts with ongoing updates
+                requestAnimationFrame(() => {
+                    this.view.dispatch({
+                        effects
+                    })
+                });
+            }
         })
     }
 
