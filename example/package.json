@@ -16,7 +16,7 @@
         "@codemirror/view": "^6.36.2",
         "codemirror": "^6.0.1",
         "loro-codemirror": "link:..",
-        "loro-crdt": "^1.5.5"
+        "loro-crdt": "^1.8.2"
     },
     "devDependencies": {
         "typescript": "^5.7.3",
