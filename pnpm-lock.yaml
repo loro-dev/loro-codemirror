@@ -15,8 +15,8 @@ importers:
         specifier: ^6.7.0
         version: 6.36.2
       loro-crdt:
-        specifier: ^1.5.5
-        version: 1.5.5
+        specifier: ^1.8.2
+        version: 1.8.2
     devDependencies:
       '@changesets/changelog-github':
         specifier: ^0.5.1
@@ -278,8 +278,8 @@ packages:
   lodash.startcase@4.4.0:
     resolution: {integrity: sha512-+WKqsK294HMSc2jEbNgpHpd0JfIBhp7rEV4aqXWqFr6AlXov+SlcgB1Fv01y2kGe3Gc8nMW7VA0SrGuSkRfIEg==}
 
-  loro-crdt@1.5.5:
-    resolution: {integrity: sha512-XflGSRTgbFFEpYOc5J2WTVFg5mkEK7Cap+tNFTcIvSAxXQfsLGI8ai+y2PeYPVVbmHSV8NtLwId0QB2aR1kEWQ==}
+  loro-crdt@1.8.2:
+    resolution: {integrity: sha512-rv33Ma8ZHGvpik9it2Zty+EJw4x/jrbtw/PWSd0Pwm/qZV3mUlB8c0a61WtlPMd/AT6rQ34i1OSg0f2UrPz3Ww==}
 
   merge2@1.4.1:
     resolution: {integrity: sha512-8q7VEgMJW4J8tcfVPy8g09NcQwZdbwFEqhe/WZkoIzjn/3TGDwtOCYtXGxA3O8tPzpczCCDgv+P2P5y00ZJOOg==}
@@ -796,7 +796,7 @@ snapshots:
 
   lodash.startcase@4.4.0: {}
 
-  loro-crdt@1.5.5: {}
+  loro-crdt@1.8.2: {}
 
   merge2@1.4.1: {}
 
