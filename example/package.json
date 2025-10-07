@@ -16,9 +16,14 @@
         "@codemirror/view": "^6.36.2",
         "codemirror": "^6.0.1",
         "loro-codemirror": "link:..",
-        "loro-crdt": "^1.8.2"
+        "loro-crdt": "^1.8.2",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1"
     },
     "devDependencies": {
+        "@types/react": "^18.3.12",
+        "@types/react-dom": "^18.3.1",
+        "@vitejs/plugin-react": "^4.3.4",
         "typescript": "^5.7.3",
         "vite": "^6.1.1",
         "vite-plugin-top-level-await": "^1.5.0",
