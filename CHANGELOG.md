@@ -1,5 +1,11 @@
 # loro-codemirror
 
+## 0.3.3
+
+### Patch Changes
+
+-   [#17](https://github.com/loro-dev/loro-codemirror/pull/17) [`f1a8c1d`](https://github.com/loro-dev/loro-codemirror/commit/f1a8c1d6d7c65fe2108161ff37b599893e7daa1b) Thanks [@Leeeon233](https://github.com/Leeeon233)! - feat: export ephemeral key
+
 ## 0.3.2
 
 ### Patch Changes
