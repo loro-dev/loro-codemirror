@@ -54,36 +54,37 @@ export type CursorState = { anchor: Uint8Array; head?: Uint8Array };
 
 export type AwarenessState =
     | {
-        type: "update";
-        uid: string;
-        cursor: CursorState;
-        user?: UserState;
-    }
+          type: "update";
+          uid: string;
+          cursor: CursorState;
+          user?: UserState;
+      }
     | {
-        type: "delete";
-        uid: string;
-    };
+          type: "delete";
+          uid: string;
+      };
 
 export type UserState = {
     name: string;
     colorClassName: string;
-}
+    [key: string]: Value;
+};
 
 export type CursorEffect =
     | {
-        type: "update";
-        peer: string;
-        cursor: { anchor: number; head?: number };
-        user?: UserState;
-    }
+          type: "update";
+          peer: string;
+          cursor: { anchor: number; head?: number };
+          user?: UserState;
+      }
     | {
-        type: "delete";
-        peer: string;
-    }
+          type: "delete";
+          peer: string;
+      }
     | {
-        type: "checkout";
-        checkout: boolean;
-    };
+          type: "checkout";
+          checkout: boolean;
+      };
 
 // We should use layer https://github.com/codemirror/dev/issues/989
 export const remoteAwarenessAnnotation = Annotation.define<undefined>();
@@ -193,7 +194,7 @@ export class RemoteCursorMarker implements LayerMarker {
         private height: number,
         private name: string,
         private colorClassName: string
-    ) { }
+    ) {}
 
     draw(): HTMLElement {
         const elt = document.createElement("div");

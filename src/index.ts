@@ -1,5 +1,11 @@
 import { type Extension, Prec } from "@codemirror/state";
-import { Awareness, EphemeralStore, LoroDoc, LoroText, UndoManager } from "loro-crdt";
+import {
+    Awareness,
+    EphemeralStore,
+    LoroDoc,
+    LoroText,
+    UndoManager,
+} from "loro-crdt";
 import {
     createCursorLayer as createAwarenessCursorLayer,
     createSelectionLayer as createAwarenessSelectionLayer,
@@ -14,11 +20,17 @@ import { LoroSyncPluginValue } from "./sync.ts";
 import { keymap, ViewPlugin } from "@codemirror/view";
 import { undoKeyMap, undoManagerStateField, UndoPluginValue } from "./undo.ts";
 import { defaultGetTextFromDoc } from "./utils.ts";
-import { createCursorLayer, createSelectionLayer, EphemeralPlugin, ephemeralStateField, type EphemeralState } from "./ephemeral.ts";
-
+import {
+    createCursorLayer,
+    createSelectionLayer,
+    EphemeralPlugin,
+    ephemeralStateField,
+    type EphemeralState,
+} from "./ephemeral.ts";
+export { getCursorEphemeralKey, getUserEphemeralKey } from "./ephemeral.ts";
 
 export { undo, redo } from "./undo.ts";
-
+export type { UserState, AwarenessState, EphemeralState };
 export { defaultGetTextFromDoc as getTextFromDoc };
 
 /**
@@ -85,7 +97,6 @@ export const LoroAwarenessPlugin = (
         loroCursorTheme,
     ];
 };
-
 
 /**
  * LoroEphemeralPlugin is a plugin that adds ephemeral to the editor.
