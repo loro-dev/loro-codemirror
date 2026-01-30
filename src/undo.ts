@@ -25,13 +25,17 @@ export const undoManagerStateField = StateField.define<UndoManager | undefined>(
         update(value, transaction) {
             for (const effect of transaction.effects) {
                 if (effect.is(undoEffect)) {
-                    if (value && value.canUndo()) {
-                        value.undo();
-                    }
+                    queueMicrotask(() => {
+                        if (value?.canUndo()) {
+                            value.undo();
+                        }
+                    });
                 } else if (effect.is(redoEffect)) {
-                    if (value && value.canRedo()) {
-                        value.redo();
-                    }
+                    queueMicrotask(() => {
+                        if (value?.canRedo()) {
+                            value.redo();
+                        }
+                    });
                 }
             }
             return value;
