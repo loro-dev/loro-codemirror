@@ -20,6 +20,7 @@ import {
 } from "./awareness.ts";
 import {
     EditorSelection,
+    SelectionRange,
     StateEffect,
     StateField,
     type Extension,
@@ -292,29 +293,34 @@ export class EphemeralPlugin implements PluginValue {
         ) {
             return;
         }
-        const selection = update.state.selection.main;
-        if (this.view.hasFocus && !this.doc.isDetached()) {
-            const cursorState = getCursorState(
-                this.doc,
-                selection.anchor,
-                selection.head,
-                this.getTextFromDoc
-            );
-            this.ephemeralStore.set(
-                getCursorEphemeralKey(this.doc),
-                cursorState
-            );
-            if (!this.initUser) {
-                this.ephemeralStore.set(
-                    getUserEphemeralKey(this.doc),
-                    this.user
+        
+        const add_selection = (selection: SelectionRange) => {
+            if (this.view.hasFocus && !this.doc.isDetached()) {
+                const cursorState = getCursorState(
+                    this.doc,
+                    selection.anchor,
+                    selection.head,
+                    this.getTextFromDoc
                 );
-                this.initUser = true;
+                this.ephemeralStore.set(
+                    getCursorEphemeralKey(this.doc),
+                    cursorState
+                );
+                if (!this.initUser) {
+                    this.ephemeralStore.set(
+                        getUserEphemeralKey(this.doc),
+                        this.user
+                    );
+                    this.initUser = true;
+                }
+            } else {
+                // when checkout or blur
+                this.ephemeralStore.delete(getCursorEphemeralKey(this.doc));
             }
-        } else {
-            // when checkout or blur
-            this.ephemeralStore.delete(getCursorEphemeralKey(this.doc));
         }
+        
+        const selections = update.state.selection.ranges;
+        for (const selection of selections) { add_selection(selection); }
     }
 
     destroy(): void {
