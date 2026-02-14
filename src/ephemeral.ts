@@ -28,7 +28,7 @@ import {
 
 export const ephemeralEffect = StateEffect.define<EphemeralEffect>();
 export const ephemeralStateField = StateField.define<{
-    remoteCursors: Map<string, { anchor: number; head?: number }>;
+    remoteCursors: Map<string, { anchor: number; head?: number }[]>;
     remoteUsers: Map<string, UserState | undefined>;
     isCheckout: boolean;
 }>({
@@ -47,8 +47,8 @@ export const ephemeralStateField = StateField.define<{
                         value.remoteCursors.delete(effect.value.peer);
                         break;
                     case "cursor":
-                        const { peer, cursor } = effect.value;
-                        value.remoteCursors.set(peer, cursor);
+                        const { peer, cursors } = effect.value;
+                        value.remoteCursors.set(peer, cursors);
                         break;
                     case "user":
                         const { peer: uid, user } = effect.value;
@@ -71,7 +71,7 @@ type EphemeralEffect =
     | {
           type: "cursor";
           peer: string;
-          cursor: { anchor: number; head?: number };
+          cursors: { anchor: number; head?: number }[];
       }
     | {
           type: "user";
@@ -86,25 +86,32 @@ type EphemeralEffect =
 const getCursorEffect = (
     doc: LoroDoc,
     peer: string,
-    state: CursorState
+    states: CursorState[]
 ): StateEffect<EphemeralEffect> | undefined => {
-    const anchor = Cursor.decode(state.anchor);
-    const anchorPos = doc.getCursorPos(anchor).offset;
-    let headPos = anchorPos;
-    if (state.head) {
-        // range
-        const head = Cursor.decode(state.head);
-        headPos = doc.getCursorPos(head).offset;
-    }
+    let cursors = states.map(
+        (state) => {
+            const anchor = Cursor.decode(state.anchor);
+            const anchorPos = doc.getCursorPos(anchor).offset;
+            let headPos = anchorPos;
+            if (state.head) {
+                // range
+                const head = Cursor.decode(state.head);
+                headPos = doc.getCursorPos(head).offset;
+            }
+            
+            return { anchor: anchorPos, head: headPos }
+        }
+    );
+    
     return ephemeralEffect.of({
         type: "cursor",
         peer,
-        cursor: { anchor: anchorPos, head: headPos },
+        cursors,
     });
 };
 
 export type EphemeralState = {
-    [key: `${string}-cm-cursor`]: CursorState;
+    [key: `${string}-cm-cursor`]: CursorState[];
     [key: `${string}-cm-user`]: UserState | undefined;
 };
 
@@ -127,6 +134,12 @@ export const createCursorLayer = (): Extension => {
                 return [];
             }
             return Array.from(remoteCursors.entries()).flatMap(
+          ([s, states]) => {
+                        return states.map(
+                            (state): [string, { anchor: number; head?: number; }] => [s, state]
+                        )
+                    }
+                ).flatMap(
                 ([peer, state]) => {
                     const selectionRange = EditorSelection.cursor(state.anchor);
                     const user = remoteUsers.get(peer);
@@ -154,6 +167,13 @@ export const createSelectionLayer = (): Extension =>
                 return [];
             }
             return Array.from(remoteCursors.entries())
+                .flatMap(
+                    ([s, states]) => {
+                        return states.map(
+                            (state): [string, { anchor: number; head?: number; }] => [s, state]
+                        )
+                    }
+                )
                 .filter(
                     ([_, state]) =>
                         state.head !== undefined && state.anchor !== state.head
@@ -197,9 +217,9 @@ export class EphemeralPlugin implements PluginValue {
                     if (peer === this.doc.peerIdStr) {
                         continue;
                     }
-                    const state = this.ephemeralStore.get(`${peer}-cm-cursor`);
-                    if (state) {
-                        const effect = getCursorEffect(this.doc, peer, state);
+                    const states = this.ephemeralStore.get(`${peer}-cm-cursor`);
+                    if (states && states.length > 0) {
+                        const effect = getCursorEffect(this.doc, peer, states);
                         if (effect) {
                             effects.push(effect);
                         }
@@ -240,10 +260,11 @@ export class EphemeralPlugin implements PluginValue {
             for (const key of e.added.concat(e.updated)) {
                 const peer = key.split("-")[0];
                 if (key.endsWith(CURSOR_KEY)) {
-                    const state = this.ephemeralStore.get(
+                    const states = this.ephemeralStore.get(
                         key as keyof EphemeralState
-                    )! as CursorState;
-                    const effect = getCursorEffect(this.doc, peer, state);
+                    )! as CursorState[];
+                    
+                    const effect = getCursorEffect(this.doc, peer, states);
                     if (effect) {
                         effects.push(effect);
                     }
@@ -294,33 +315,35 @@ export class EphemeralPlugin implements PluginValue {
             return;
         }
         
-        const add_selection = (selection: SelectionRange) => {
-            if (this.view.hasFocus && !this.doc.isDetached()) {
-                const cursorState = getCursorState(
-                    this.doc,
-                    selection.anchor,
-                    selection.head,
-                    this.getTextFromDoc
-                );
-                this.ephemeralStore.set(
-                    getCursorEphemeralKey(this.doc),
-                    cursorState
-                );
-                if (!this.initUser) {
-                    this.ephemeralStore.set(
-                        getUserEphemeralKey(this.doc),
-                        this.user
-                    );
-                    this.initUser = true;
+        if (this.view.hasFocus && !this.doc.isDetached()) {
+            const cursors = update.state.selection.ranges.map(
+                (selection) => {
+                    return getCursorState(
+                        this.doc,
+                        selection.anchor,
+                        selection.head,
+                        this.getTextFromDoc
+                    )
                 }
-            } else {
-                // when checkout or blur
-                this.ephemeralStore.delete(getCursorEphemeralKey(this.doc));
+            )
+            
+            this.ephemeralStore.set(
+                getCursorEphemeralKey(this.doc),
+                cursors
+            );
+            
+            if (!this.initUser) {
+                this.ephemeralStore.set(
+                    getUserEphemeralKey(this.doc),
+                    this.user
+                );
+                this.initUser = true;
             }
+            
+        } else {
+            // when checkout or blur
+            this.ephemeralStore.delete(getCursorEphemeralKey(this.doc));
         }
-        
-        const selections = update.state.selection.ranges;
-        for (const selection of selections) { add_selection(selection); }
     }
 
     destroy(): void {
