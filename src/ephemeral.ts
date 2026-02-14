@@ -136,17 +136,17 @@ export const createCursorLayer = (): Extension => {
             return Array.from(remoteCursors.entries()).flatMap(
           ([s, states]) => {
                         return states.map(
-                            (state): [string, { anchor: number; head?: number; }] => [s, state]
+                            (state, index): [string, { anchor: number; head?: number; }, boolean] => [s, state, index == 0]
                         )
                     }
                 ).flatMap(
-                ([peer, state]) => {
+                ([peer, state, is_main]) => {
                     const selectionRange = EditorSelection.cursor(state.anchor);
                     const user = remoteUsers.get(peer);
                     return RemoteCursorMarker.createCursor(
                         view,
                         selectionRange,
-                        user?.name || "unknown",
+                        (is_main) ? user?.name || "unknown" : "",
                         user?.colorClassName || ""
                     );
                 }
