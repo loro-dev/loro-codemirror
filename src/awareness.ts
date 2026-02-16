@@ -74,7 +74,8 @@ export type UserStyle =
 
 export type UserState = {
     name: string;
-    style: UserStyle;
+    style?: UserStyle;
+    colorClassName?: string;
     [key: string]: Value;
 };
 
@@ -149,11 +150,19 @@ export const createCursorLayer = (): Extension => {
                 const selectionRange = EditorSelection.cursor(
                     state.cursor.anchor
                 );
+                const user = state.user;
+                let style: UserStyle = { colorClassName: "" };
+                if (user?.style) {
+                    style = user.style;
+                } else if (user?.colorClassName) {
+                    style = { colorClassName: user.colorClassName };
+                }
+
                 return RemoteCursorMarker.createCursor(
                     view,
                     selectionRange,
-                    state.user?.name || "unknown",
-                    state.user?.style || { colorClassName: "" }
+                    user?.name || "unknown",
+                    style
                 );
             });
         },
@@ -183,16 +192,22 @@ export const createSelectionLayer = (): Extension =>
                         state.cursor.head!
                     );
                     const user = state.user;
-                    if (user?.style && "colorClassName" in user.style) {
+                    const style =
+                        user?.style ||
+                        (user?.colorClassName
+                            ? { colorClassName: user.colorClassName }
+                            : undefined);
+
+                    if (style && "colorClassName" in style) {
                         return RectangleMarker.forRange(
                             view,
-                            `loro-selection ${user.style.colorClassName}`,
+                            `loro-selection ${style.colorClassName}`,
                             selectionRange
                         );
-                    } else if (user?.style) {
+                    } else if (style && "backgroundColor" in style) {
                         return RemoteSelectionMarker.forRange(
                             view,
-                            user.style,
+                            style,
                             selectionRange
                         );
                     }
@@ -232,19 +247,24 @@ export class RemoteCursorMarker implements LayerMarker {
         element.style.left = `${this.left}px`;
         element.style.top = `${this.top}px`;
         element.style.height = `${this.height}px`;
-        if ("colorClassName" in this.style) {
+        if (this.style && "colorClassName" in this.style) {
             element.className = `loro-cursor ${this.style.colorClassName}`;
             element.style.removeProperty("--loro-cursor-color");
             element.style.removeProperty("--loro-cursor-text-color");
             element.style.backgroundColor = "";
-        } else {
+        } else if (this.style && "backgroundColor" in this.style) {
             element.className = `loro-cursor`;
             element.style.setProperty(
                 "--loro-cursor-color",
                 this.style.backgroundColor
             );
-            element.style.setProperty("--loro-cursor-text-color", this.style.color);
+            element.style.setProperty(
+                "--loro-cursor-text-color",
+                this.style.color
+            );
             element.style.backgroundColor = this.style.backgroundColor;
+        } else {
+            element.className = `loro-cursor`;
         }
         element.style.setProperty("--name", `"${this.name}"`);
     }
@@ -332,7 +352,7 @@ export class RemoteSelectionMarker implements LayerMarker {
         element.style.width = `${this.width}px`;
         element.style.height = `${this.height}px`;
         element.style.position = "absolute";
-        if (!("colorClassName" in this.style)) {
+        if (this.style && !("colorClassName" in this.style)) {
             element.style.backgroundColor = this.style.backgroundColor;
         }
     }
@@ -354,10 +374,10 @@ export class RemoteSelectionMarker implements LayerMarker {
     ): RemoteSelectionMarker[] {
         return RectangleMarker.forRange(view, "", range).map((m) => {
             return new RemoteSelectionMarker(
-                (m as any).left,
-                (m as any).top,
-                (m as any).width,
-                (m as any).height,
+                (m as any).left ?? 0,
+                (m as any).top ?? 0,
+                (m as any).width ?? 0,
+                (m as any).height ?? 0,
                 style
             );
         });

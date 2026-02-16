@@ -16,6 +16,7 @@ import {
 import {
     getCursorState,
     type UserState,
+    type UserStyle,
     type CursorState,
     RemoteCursorMarker,
     RemoteSelectionMarker,
@@ -131,11 +132,17 @@ export const createCursorLayer = (): Extension => {
                 ([peer, state]) => {
                     const selectionRange = EditorSelection.cursor(state.anchor);
                     const user = remoteUsers.get(peer);
+                    let style: UserStyle = { colorClassName: "" };
+                    if (user?.style) {
+                        style = user.style;
+                    } else if (user?.colorClassName) {
+                        style = { colorClassName: user.colorClassName };
+                    }
                     return RemoteCursorMarker.createCursor(
                         view,
                         selectionRange,
                         user?.name || "unknown",
-                        user?.style || { colorClassName: "" }
+                        style
                     );
                 }
             );
@@ -165,16 +172,22 @@ export const createSelectionLayer = (): Extension =>
                         state.anchor,
                         state.head!
                     );
-                    if (user?.style && "colorClassName" in user.style) {
+                    const style =
+                        user?.style ||
+                        (user?.colorClassName
+                            ? { colorClassName: user.colorClassName }
+                            : undefined);
+
+                    if (style && "colorClassName" in style) {
                         return RectangleMarker.forRange(
                             view,
-                            `loro-selection ${user.style.colorClassName}`,
+                            `loro-selection ${style.colorClassName}`,
                             selectionRange
                         );
-                    } else if (user?.style) {
+                    } else if (style && "backgroundColor" in style) {
                         return RemoteSelectionMarker.forRange(
                             view,
-                            user.style,
+                            style,
                             selectionRange
                         );
                     }

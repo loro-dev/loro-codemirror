@@ -11,9 +11,9 @@ import {
     LoroSyncPlugin,
     LoroUndoPlugin,
     type UserState,
+    getUserEphemeralKey,
 } from "loro-codemirror";
 import { EphemeralStore, LoroDoc, UndoManager } from "loro-crdt";
-import { getUserEphemeralKey } from "../../dist/ephemeral";
 
 type EditorVariant = "primary" | "secondary";
 

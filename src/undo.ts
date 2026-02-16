@@ -62,9 +62,9 @@ export class UndoPluginValue implements PluginValue {
             for (let { diff, target } of e.events) {
                 const text = this.getTextFromDoc(this.doc);
                 // Skip if the event is not a text event
-                if (diff.type !== "text") return;
+                if (diff.type !== "text") continue;
                 // Skip if the event is not for the current document
-                if (target !== text.id) return;
+                if (target !== text.id) continue;
                 const textDiff = diff.diff;
                 for (const delta of textDiff) {
                     if (delta.insert) {
