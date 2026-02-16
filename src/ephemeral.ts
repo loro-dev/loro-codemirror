@@ -4,6 +4,7 @@ import {
     type EditorView,
     type PluginValue,
     type ViewUpdate,
+    type LayerMarker,
 } from "@codemirror/view";
 import {
     Cursor,
@@ -17,6 +18,7 @@ import {
     type UserState,
     type CursorState,
     RemoteCursorMarker,
+    RemoteSelectionMarker,
 } from "./awareness.ts";
 import {
     EditorSelection,
@@ -133,7 +135,7 @@ export const createCursorLayer = (): Extension => {
                         view,
                         selectionRange,
                         user?.name || "unknown",
-                        user?.colorClassName || ""
+                        user?.style || { colorClassName: "" }
                     );
                 }
             );
@@ -157,18 +159,30 @@ export const createSelectionLayer = (): Extension =>
                     ([_, state]) =>
                         state.head !== undefined && state.anchor !== state.head
                 )
-                .flatMap(([peer, state]) => {
+                .flatMap(([peer, state]): readonly LayerMarker[] => {
                     const user = remoteUsers.get(peer);
                     const selectionRange = EditorSelection.range(
                         state.anchor,
                         state.head!
                     );
-                    const markers = RectangleMarker.forRange(
+                    if (user?.style && "colorClassName" in user.style) {
+                        return RectangleMarker.forRange(
+                            view,
+                            `loro-selection ${user.style.colorClassName}`,
+                            selectionRange
+                        );
+                    } else if (user?.style) {
+                        return RemoteSelectionMarker.forRange(
+                            view,
+                            user.style,
+                            selectionRange
+                        );
+                    }
+                    return RectangleMarker.forRange(
                         view,
-                        `loro-selection ${user?.colorClassName || ""}`,
+                        "loro-selection",
                         selectionRange
                     );
-                    return markers;
                 });
         },
     });

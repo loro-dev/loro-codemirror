@@ -33,6 +33,7 @@ export const loroCursorTheme = EditorView.baseTheme({
         width: "2px",
         display: "inline-block",
         height: "1.2em",
+        backgroundColor: "var(--loro-cursor-color, black)",
     },
     ".loro-cursor::before": {
         position: "absolute",
@@ -45,9 +46,12 @@ export const loroCursorTheme = EditorView.baseTheme({
         whiteSpace: "nowrap",
         userSelect: "none",
         opacity: "0.7",
+        backgroundColor: "var(--loro-cursor-color, black)",
+        color: "var(--loro-cursor-text-color, white)",
     },
     ".loro-selection": {
         opacity: "0.5",
+        backgroundColor: "var(--loro-selection-color, #72aaff)",
     },
 });
 export type CursorState = { anchor: Uint8Array; head?: Uint8Array };
@@ -64,9 +68,13 @@ export type AwarenessState =
           uid: string;
       };
 
+export type UserStyle =
+    | { colorClassName: string }
+    | { color: string; backgroundColor: string };
+
 export type UserState = {
     name: string;
-    colorClassName: string;
+    style: UserStyle;
     [key: string]: Value;
 };
 
@@ -145,7 +153,7 @@ export const createCursorLayer = (): Extension => {
                     view,
                     selectionRange,
                     state.user?.name || "unknown",
-                    state.user?.colorClassName || ""
+                    state.user?.style || { colorClassName: "" }
                 );
             });
         },
@@ -169,17 +177,30 @@ export const createSelectionLayer = (): Extension =>
                         state.cursor.head !== undefined &&
                         state.cursor.anchor !== state.cursor.head
                 )
-                .flatMap(([_, state]) => {
+                .flatMap(([_, state]): readonly LayerMarker[] => {
                     const selectionRange = EditorSelection.range(
                         state.cursor.anchor,
                         state.cursor.head!
                     );
-                    const markers = RectangleMarker.forRange(
+                    const user = state.user;
+                    if (user?.style && "colorClassName" in user.style) {
+                        return RectangleMarker.forRange(
+                            view,
+                            `loro-selection ${user.style.colorClassName}`,
+                            selectionRange
+                        );
+                    } else if (user?.style) {
+                        return RemoteSelectionMarker.forRange(
+                            view,
+                            user.style,
+                            selectionRange
+                        );
+                    }
+                    return RectangleMarker.forRange(
                         view,
-                        `loro-selection ${state.user?.colorClassName || ""}`,
+                        "loro-selection",
                         selectionRange
                     );
-                    return markers;
                 });
         },
     });
@@ -193,7 +214,7 @@ export class RemoteCursorMarker implements LayerMarker {
         private top: number,
         private height: number,
         private name: string,
-        private colorClassName: string
+        private style: UserStyle
     ) {}
 
     draw(): HTMLElement {
@@ -211,7 +232,20 @@ export class RemoteCursorMarker implements LayerMarker {
         element.style.left = `${this.left}px`;
         element.style.top = `${this.top}px`;
         element.style.height = `${this.height}px`;
-        element.className = `loro-cursor ${this.colorClassName}`;
+        if ("colorClassName" in this.style) {
+            element.className = `loro-cursor ${this.style.colorClassName}`;
+            element.style.removeProperty("--loro-cursor-color");
+            element.style.removeProperty("--loro-cursor-text-color");
+            element.style.backgroundColor = "";
+        } else {
+            element.className = `loro-cursor`;
+            element.style.setProperty(
+                "--loro-cursor-color",
+                this.style.backgroundColor
+            );
+            element.style.setProperty("--loro-cursor-text-color", this.style.color);
+            element.style.backgroundColor = this.style.backgroundColor;
+        }
         element.style.setProperty("--name", `"${this.name}"`);
     }
 
@@ -220,7 +254,8 @@ export class RemoteCursorMarker implements LayerMarker {
             this.left === other.left &&
             this.top === other.top &&
             this.height === other.height &&
-            this.name === other.name
+            this.name === other.name &&
+            JSON.stringify(this.style) === JSON.stringify(other.style)
         );
     }
 
@@ -228,7 +263,7 @@ export class RemoteCursorMarker implements LayerMarker {
         view: EditorView,
         position: SelectionRange,
         displayName: string,
-        colorClassName: string
+        style: UserStyle
     ): RemoteCursorMarker[] {
         const absolutePosition = this.calculateAbsoluteCursorPosition(
             position,
@@ -250,7 +285,7 @@ export class RemoteCursorMarker implements LayerMarker {
                 absolutePosition.top - baseTop,
                 absolutePosition.bottom - absolutePosition.top,
                 displayName,
-                colorClassName
+                style
             ),
         ];
     }
@@ -264,6 +299,68 @@ export class RemoteCursorMarker implements LayerMarker {
             Math.min(view.state.doc.length, position.anchor)
         );
         return view.coordsAtPos(cappedPositionHead, position.assoc || 1);
+    }
+}
+
+/**
+ * Renders a selection of another user.
+ */
+export class RemoteSelectionMarker implements LayerMarker {
+    constructor(
+        private left: number,
+        private top: number,
+        private width: number,
+        private height: number,
+        private style: UserStyle
+    ) {}
+
+    draw(): HTMLElement {
+        const elt = document.createElement("div");
+        elt.className = "loro-selection";
+        this.adjust(elt);
+        return elt;
+    }
+
+    update(elt: HTMLElement): boolean {
+        this.adjust(elt);
+        return true;
+    }
+
+    adjust(element: HTMLElement) {
+        element.style.left = `${this.left}px`;
+        element.style.top = `${this.top}px`;
+        element.style.width = `${this.width}px`;
+        element.style.height = `${this.height}px`;
+        element.style.position = "absolute";
+        if (!("colorClassName" in this.style)) {
+            element.style.backgroundColor = this.style.backgroundColor;
+        }
+    }
+
+    eq(other: RemoteSelectionMarker): boolean {
+        return (
+            this.left === other.left &&
+            this.top === other.top &&
+            this.width === other.width &&
+            this.height === other.height &&
+            JSON.stringify(this.style) === JSON.stringify(other.style)
+        );
+    }
+
+    public static forRange(
+        view: EditorView,
+        style: UserStyle,
+        range: SelectionRange
+    ): RemoteSelectionMarker[] {
+        return RectangleMarker.forRange(view, "", range).map((m) => {
+            return new RemoteSelectionMarker(
+                (m as any).left,
+                (m as any).top,
+                (m as any).width,
+                (m as any).height,
+                style
+            );
+        });
     }
 }
 

@@ -34,8 +34,8 @@ const baseExtensions = [
     javascript({ typescript: true }),
 ];
 
-const USER1: UserState = { name: "User 1", colorClassName: "user1" };
-const USER2: UserState = { name: "User 2", colorClassName: "user2" };
+const USER1: UserState = { name: "User 1", style: { colorClassName: "user1" } };
+const USER2: UserState = { name: "User 2", style: { colorClassName: "user2" } };
 
 const CollaborativeEditor = ({
     title,
@@ -80,13 +80,23 @@ const CollaborativeEditor = ({
         return () => {
             view.destroy();
         };
-    }, [doc, ephemeral, undoManager, user.name, user.colorClassName, variant]);
+    }, [doc, ephemeral, undoManager, user.name, user.style, variant]);
 
     return (
         <div className="editor-wrapper">
             <h2 className="editor-heading">
                 {title}
-                <span className={`editor-badge ${user.colorClassName}`}>
+                <span
+                    className={`editor-badge ${"colorClassName" in user.style ? user.style.colorClassName : ""}`}
+                    style={
+                        !("colorClassName" in user.style)
+                            ? {
+                                  backgroundColor: user.style.backgroundColor,
+                                  color: user.style.color,
+                              }
+                            : {}
+                    }
+                >
                     {user.name}
                 </span>
             </h2>
@@ -140,9 +150,12 @@ const App = () => {
                 </p>
                 <button
                     onClick={() => {
-                        const changeUser = {
+                        const changeUser: UserState = {
                             name: "Changed User",
-                            colorClassName: "user3",
+                            style: {
+                                backgroundColor: "#fbbf24",
+                                color: "#b45309",
+                            },
                         };
                         ephemeral2.set(getUserEphemeralKey(doc2), changeUser);
                         setUser2(changeUser);

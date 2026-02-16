@@ -26,7 +26,7 @@ new EditorView({
                 // optional LoroEphemeralPlugin
                 {
                     ephemeral,
-                    user: { name: "Bob", colorClassName: "user1" },
+                    user: { name: "Bob", style: { colorClassName: "user1" } },
                 },
                 // optional LoroUndoPlugin
                 undoManager,
