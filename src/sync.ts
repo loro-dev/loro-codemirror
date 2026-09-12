@@ -11,7 +11,6 @@ export const loroSyncAnnotation = Annotation.define();
 
 export class LoroSyncPluginValue implements PluginValue {
     sub?: Subscription;
-    private isInitDispatch = false;
     constructor(
         private view: EditorView,
         private doc: LoroDoc,
@@ -19,7 +18,6 @@ export class LoroSyncPluginValue implements PluginValue {
     ) {
         this.sub = doc.subscribe(this.onRemoteUpdate);
         Promise.resolve().then(() => {
-            this.isInitDispatch = true;
             const currentText = this.view.state.doc.toString();
             const text = this.getTextFromDoc(this.doc);
             if (currentText === text.toString()) {
@@ -33,6 +31,9 @@ export class LoroSyncPluginValue implements PluginValue {
                         insert: text.toString(),
                     },
                 ],
+                // Marks this as our own write, so `update` skips it instead of
+                // applying it back to the document.
+                annotations: [loroSyncAnnotation.of(this)],
             });
         });
     }
@@ -91,11 +92,6 @@ export class LoroSyncPluginValue implements PluginValue {
     };
 
     update(update: ViewUpdate): void {
-        if (this.isInitDispatch) {
-            this.isInitDispatch = false;
-            return;
-        }
-
         if (
             !update.docChanged ||
             (update.transactions.length > 0 &&
