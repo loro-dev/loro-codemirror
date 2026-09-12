@@ -100,10 +100,12 @@ export class UndoPluginValue implements PluginValue {
             if (!anchor) return;
 
             setTimeout(() => {
-                const anchorPos = this.doc!.getCursorPos(anchor).offset;
+                const anchorPos = this.doc.getCursorPos(anchor)?.offset;
+                if (anchorPos === undefined) return;
                 const headPos = head
-                    ? this.doc!.getCursorPos(head).offset
+                    ? this.doc.getCursorPos(head)?.offset
                     : anchorPos;
+                if (headPos === undefined) return;
                 const selection = EditorSelection.single(anchorPos, headPos);
                 this.view.dispatch({
                     selection,

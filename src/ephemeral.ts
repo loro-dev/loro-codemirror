@@ -88,12 +88,15 @@ const getCursorEffect = (
     state: CursorState
 ): StateEffect<EphemeralEffect> | undefined => {
     const anchor = Cursor.decode(state.anchor);
-    const anchorPos = doc.getCursorPos(anchor).offset;
+    const anchorPos = doc.getCursorPos(anchor)?.offset;
+    if (anchorPos === undefined) return;
     let headPos = anchorPos;
     if (state.head) {
         // range
         const head = Cursor.decode(state.head);
-        headPos = doc.getCursorPos(head).offset;
+        const resolvedHeadPos = doc.getCursorPos(head)?.offset;
+        if (resolvedHeadPos === undefined) return;
+        headPos = resolvedHeadPos;
     }
     return ephemeralEffect.of({
         type: "cursor",
