@@ -1,5 +1,15 @@
 # loro-codemirror
 
+## 0.4.0
+
+### Minor Changes
+
+-   [`86fe033`](https://github.com/loro-dev/loro-codemirror/commit/86fe03330765a7f0799c7fd00c13265cb3a77287) Thanks [@Leeeon233](https://github.com/Leeeon233)! - fix: don't discard the first real editor update when no seeding dispatch happens
+
+### Patch Changes
+
+-   [`127c1cb`](https://github.com/loro-dev/loro-codemirror/commit/127c1cb4ee1f85caf2c38770308b167a09acad9d) Thanks [@Leeeon233](https://github.com/Leeeon233)! - feat: export ephemeral key
+
 ## 0.3.3
 
 ### Patch Changes
