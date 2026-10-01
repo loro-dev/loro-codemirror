@@ -61,16 +61,20 @@ export class UndoPluginValue implements PluginValue {
         this.sub = doc.subscribe((e) => {
             if (e.origin !== "undo") return;
 
-            let changes: ChangeSpec[] = [];
+            // As in sync.ts: a batch can carry events for other containers,
+            // and for this text more than once. An undo step that touches the
+            // map as well as the text -- typing into a file just created --
+            // puts the map's event first, so returning here meant the undo
+            // never reached the view: the document undid and the view did
+            // not, leaving the two out of step by exactly the text that had
+            // been taken back.
+            const changes: ChangeSpec[] = [];
             let pos = 0;
-            for (let { diff, target } of e.events) {
-                const text = this.getTextFromDoc(this.doc);
-                // Skip if the event is not a text event
-                if (diff.type !== "text") return;
-                // Skip if the event is not for the current document
-                if (target !== text.id) return;
-                const textDiff = diff.diff;
-                for (const delta of textDiff) {
+            const text = this.getTextFromDoc(this.doc);
+            for (const { diff, target } of e.events) {
+                if (diff.type !== "text") continue;
+                if (target !== text.id) continue;
+                for (const delta of diff.diff) {
                     if (delta.insert) {
                         changes.push({
                             from: pos,
@@ -87,6 +91,8 @@ export class UndoPluginValue implements PluginValue {
                         pos += delta.retain;
                     }
                 }
+            }
+            if (changes.length > 0) {
                 this.view.dispatch({
                     changes,
                     annotations: [loroSyncAnnotation.of("undo")],

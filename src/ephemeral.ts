@@ -179,8 +179,6 @@ export const createSelectionLayer = (): Extension =>
 export class EphemeralPlugin implements PluginValue {
     sub: Subscription;
     ephemeralSub: Subscription;
-    initUser: boolean = false;
-
     constructor(
         public view: EditorView,
         public doc: LoroDoc,
@@ -307,13 +305,10 @@ export class EphemeralPlugin implements PluginValue {
                 getCursorEphemeralKey(this.doc),
                 cursorState
             );
-            if (!this.initUser) {
-                this.ephemeralStore.set(
-                    getUserEphemeralKey(this.doc),
-                    this.user
-                );
-                this.initUser = true;
-            }
+            // Sent with every caret, not once: entries expire and a relay
+            // need not replay them, so a peer who joins later would
+            // otherwise see this caret with no name.
+            this.ephemeralStore.set(getUserEphemeralKey(this.doc), this.user);
         } else {
             // when checkout or blur
             this.ephemeralStore.delete(getCursorEphemeralKey(this.doc));

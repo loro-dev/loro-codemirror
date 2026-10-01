@@ -1,4 +1,8 @@
-import { Annotation, type ChangeSpec } from "@codemirror/state";
+import {
+    Annotation,
+    type ChangeSpec,
+    type Transaction,
+} from "@codemirror/state";
 import { EditorView, type PluginValue, ViewUpdate } from "@codemirror/view";
 import {
     LoroDoc,
@@ -57,16 +61,21 @@ export class LoroSyncPluginValue implements PluginValue {
             return;
         }
         if (e.by === "import") {
-            let changes: ChangeSpec[] = [];
+            // A batch can carry events for containers other than this text --
+            // a document that holds a map of texts emits the map's event
+            // alongside the text's -- and it can carry more than one event
+            // for this text. So skip an event that is not ours instead of
+            // abandoning the rest of the batch, and dispatch once after
+            // collecting all of them: `changes` and `pos` accumulate across
+            // events, so a dispatch inside the loop applies the earlier
+            // changes a second time.
+            const changes: ChangeSpec[] = [];
             let pos = 0;
-            for (let { diff, target } of e.events) {
-                const text = this.getTextFromDoc(this.doc);
-                // Skip if the event is not a text event
-                if (diff.type !== "text") return;
-                // Skip if the event is not for the current document
-                if (target !== text.id) return;
-                const textDiff = diff.diff;
-                for (const delta of textDiff) {
+            const text = this.getTextFromDoc(this.doc);
+            for (const { diff, target } of e.events) {
+                if (diff.type !== "text") continue;
+                if (target !== text.id) continue;
+                for (const delta of diff.diff) {
                     if (delta.insert) {
                         changes.push({
                             from: pos,
@@ -83,6 +92,8 @@ export class LoroSyncPluginValue implements PluginValue {
                         pos += delta.retain;
                     }
                 }
+            }
+            if (changes.length > 0) {
                 this.view.dispatch({
                     changes,
                     annotations: [loroSyncAnnotation.of(this)],
@@ -91,29 +102,52 @@ export class LoroSyncPluginValue implements PluginValue {
         }
     };
 
+    // A dispatch this plugin made itself, or that the undo plugin made from a
+    // document event. Either is already in the document.
+    private isOwn(transaction: Transaction): boolean {
+        const mark = transaction.annotation(loroSyncAnnotation);
+        return mark === this || mark === "undo";
+    }
+
     update(update: ViewUpdate): void {
-        if (
-            !update.docChanged ||
-            (update.transactions.length > 0 &&
-                (update.transactions[0].annotation(loroSyncAnnotation) ===
-                    this ||
-                    update.transactions[0].annotation(loroSyncAnnotation) ===
-                        "undo"))
-        ) {
+        if (!update.docChanged) {
             return;
         }
-        let adj = 0;
-        update.changes.iterChanges((fromA, toA, fromB, toB, insert) => {
-            const insertText = insert.sliceString(0, insert.length, "\n");
-            if (fromA !== toA) {
-                this.getTextFromDoc(this.doc).delete(fromA + adj, toA - fromA);
+        // Transaction by transaction, not the update as a whole. A ViewUpdate
+        // can carry several transactions -- CodeMirror queues a dispatch made
+        // while another update is running and applies them together -- and
+        // deciding once for the whole update from `transactions[0]` is wrong.
+        // With one of this plugin's own writes and one user edit in the same
+        // update, that either copies the write into the document a second
+        // time, or throws the edit away, depending on which came first.
+        //
+        // Each transaction's changes are in the coordinates of the document
+        // it started from, and that document is what the text holds after the
+        // transactions before it have been written or skipped. So walking
+        // them in order and writing only the ones that are not ours keeps the
+        // two in step.
+        let written = false;
+        for (const transaction of update.transactions) {
+            if (!transaction.docChanged || this.isOwn(transaction)) {
+                continue;
             }
-            if (insertText.length > 0) {
-                this.getTextFromDoc(this.doc).insert(fromA + adj, insertText);
-            }
-            adj += insertText.length - (toA - fromA);
-        });
-        this.doc.commit();
+            const text = this.getTextFromDoc(this.doc);
+            let adj = 0;
+            transaction.changes.iterChanges((fromA, toA, fromB, toB, insert) => {
+                const insertText = insert.sliceString(0, insert.length, "\n");
+                if (fromA !== toA) {
+                    text.delete(fromA + adj, toA - fromA);
+                }
+                if (insertText.length > 0) {
+                    text.insert(fromA + adj, insertText);
+                }
+                adj += insertText.length - (toA - fromA);
+            });
+            written = true;
+        }
+        if (written) {
+            this.doc.commit();
+        }
     }
 
     destroy(): void {
