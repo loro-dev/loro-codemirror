@@ -172,6 +172,22 @@ export const redo = (view: EditorView): boolean => {
     return true;
 };
 
+// The browser's own undo (its context menu, or a shortcut no keymap took), as
+// @codemirror/commands' history() handles it.
+export const undoInputHandler = EditorView.domEventHandlers({
+    beforeinput(event, view) {
+        const command =
+            event.inputType === "historyUndo"
+                ? undo
+                : event.inputType === "historyRedo"
+                  ? redo
+                  : null;
+        if (!command) return false;
+        event.preventDefault();
+        return command(view);
+    },
+});
+
 export const undoKeyMap = [
     {
         key: "Mod-z",

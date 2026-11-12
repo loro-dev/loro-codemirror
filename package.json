@@ -14,7 +14,8 @@
     "scripts": {
         "build": "tsc",
         "dev": "tsc --watch",
-        "typecheck": "tsc --noEmit"
+        "typecheck": "tsc --noEmit",
+        "test": "vitest run --dir test"
     },
     "keywords": [
         "loro",
@@ -35,6 +36,11 @@
     "devDependencies": {
         "@changesets/changelog-github": "^0.5.1",
         "@changesets/cli": "^2.29.7",
-        "typescript": "^5.7.3"
+        "@codemirror/state": "6.7.6",
+        "@codemirror/view": "6.43.15",
+        "jsdom": "^31.0.0",
+        "loro-crdt": "1.17.1",
+        "typescript": "^5.7.3",
+        "vitest": "^3.2.7"
     }
 }
