@@ -49,4 +49,32 @@ describe("undo", () => {
         expect(errors).toEqual([]);
     });
 
+    test("the browser's own undo and redo go through Loro", async () => {
+        const doc = new LoroDoc();
+        const view = makeView(
+            "",
+            LoroExtensions(doc, undefined, new UndoManager(doc, {}))
+        );
+        await tick();
+        type(view, 0, "hello");
+
+        const input = (inputType: string) => {
+            const event = new InputEvent("beforeinput", {
+                inputType,
+                bubbles: true,
+                cancelable: true,
+            });
+            view.contentDOM.dispatchEvent(event);
+            return event.defaultPrevented;
+        };
+        expect(input("historyUndo")).toBe(true);
+        await tick();
+        expect(text(doc).toString()).toBe("");
+        expect(view.state.doc.toString()).toBe("");
+
+        expect(input("historyRedo")).toBe(true);
+        await tick();
+        expect(text(doc).toString()).toBe("hello");
+        expect(view.state.doc.toString()).toBe("hello");
+    });
 });

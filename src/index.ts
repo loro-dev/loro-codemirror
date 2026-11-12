@@ -18,7 +18,12 @@ import {
 } from "./awareness.ts";
 import { LoroSyncPluginValue } from "./sync.ts";
 import { keymap, ViewPlugin } from "@codemirror/view";
-import { undoKeyMap, undoManagerStateField, UndoPluginValue } from "./undo.ts";
+import {
+    undoInputHandler,
+    undoKeyMap,
+    undoManagerStateField,
+    UndoPluginValue,
+} from "./undo.ts";
 import { defaultGetTextFromDoc } from "./utils.ts";
 import {
     createCursorLayer,
@@ -147,7 +152,7 @@ export const LoroUndoPlugin = (
     getTextFromDoc = getTextFromDoc ?? defaultGetTextFromDoc;
     return [
         undoManagerStateField.init(() => undoManager),
-        Prec.high(keymap.of([...undoKeyMap])),
+        Prec.high([keymap.of([...undoKeyMap]), undoInputHandler]),
         ViewPlugin.define(
             (view) =>
                 new UndoPluginValue(view, doc, undoManager, getTextFromDoc)
@@ -174,7 +179,7 @@ export function LoroExtensions(
     if (undoManager) {
         extension = extension.concat([
             undoManagerStateField.init(() => undoManager),
-            Prec.high(keymap.of([...undoKeyMap])),
+            Prec.high([keymap.of([...undoKeyMap]), undoInputHandler]),
             ViewPlugin.define(
                 (view) =>
                     new UndoPluginValue(view, doc, undoManager, getTextFromDoc)
